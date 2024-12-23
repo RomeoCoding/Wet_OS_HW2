@@ -15,10 +15,13 @@ public:
 
     // Getters
     std::string get_id() const;
-    
+    std::string get_password() const;
     // Methods
     double view_balance() const;
     bool authenticate(const std::string& input_password) const;
+    void withdraw(double amount);
+    void deposit(double amount);
+
 };
 
 #endif // ACCOUNT_HPP
