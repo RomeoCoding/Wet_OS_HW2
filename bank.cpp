@@ -2,7 +2,8 @@
 #include "error_handler.hpp"
 #include <stdexcept>
 #include <algorithm>
-
+#include <string>
+ErrorHandler error_handler;
 // Constructor
 Bank::Bank() {
     // Initialize the bank's own account
@@ -14,7 +15,7 @@ void Bank::create_account(const std::string& atm_id, const std::string& id, cons
     // Use find_account to check if the account already exists
     if (find_account(id) != nullptr) {
         // Log the error if account with the same ID already exists
-        error_handler.log_error(atm_id, 'O', std::stoi(id));
+        error_handler.log_error(atm_id, 'O', id); // Use id as std::string here
         return; // Stop further execution
     }
 
@@ -24,23 +25,25 @@ void Bank::create_account(const std::string& atm_id, const std::string& id, cons
     error_handler.log_success(atm_id, 'O', id, initial_balance, 0.0);
 }
 
+
+// Deposit money
 // Deposit money
 bool Bank::deposit(const std::string& atm_id, const std::string& id, const std::string& password, double amount) {
     Account* acc = find_account(id); // Use find_account here
     if (acc == nullptr) {
-        error_handler.log_error(atm_id, 'D', std::stoi(id)); // Account not found error
+        error_handler.log_error(atm_id, 'D', id); // Use id as std::string here
         return false;
     }
 
     // Check if the password is correct
     if (!acc->authenticate(password)) {
-        error_handler.log_error(atm_id, 'D', std::stoi(id)); // Incorrect password error
+        error_handler.log_error(atm_id, 'D', id); // Use id as std::string here
         return false;
     }
 
     // Perform the deposit and log success
     acc->deposit(amount);
-    error_handler.log_success(atm_id, 'D', id, acc->view_balance(), amount, ""); // No target account for deposit
+    error_handler.log_success(atm_id, 'D', id, acc->view_balance(), amount); // No target account for deposit
     return true; // Successful deposit
 }
 
@@ -48,25 +51,25 @@ bool Bank::deposit(const std::string& atm_id, const std::string& id, const std::
 bool Bank::withdraw(const std::string& atm_id, const std::string& id, const std::string& password, double amount) {
     Account* acc = find_account(id); // Use find_account here
     if (acc == nullptr) {
-        error_handler.log_error(atm_id, 'W', std::stoi(id)); // Account not found error
+        error_handler.log_error(atm_id, 'W', id); // Use id as std::string here
         return false;
     }
 
     // Check if the password is correct
     if (!acc->authenticate(password)) {
-        error_handler.log_error(atm_id, 'W', std::stoi(id)); // Incorrect password error
+        error_handler.log_error(atm_id, 'W', id); // Use id as std::string here
         return false;
     }
 
     // Check if balance is sufficient for withdrawal
     if (acc->view_balance() < amount) {
-        error_handler.log_error(atm_id, 'W', std::stoi(id), true); // true indicates insufficient funds
+        error_handler.log_error(atm_id, 'W', id, true); // true indicates insufficient funds
         return false;
     }
 
     // Perform the withdrawal and log success
     acc->withdraw(amount);
-    error_handler.log_success(atm_id, 'W', id, acc->view_balance(), amount, ""); // No target account for withdrawal
+    error_handler.log_success(atm_id, 'W', id, acc->view_balance(), amount); // No target account for withdrawal
     return true; // Successful withdrawal
 }
 
@@ -74,16 +77,16 @@ bool Bank::withdraw(const std::string& atm_id, const std::string& id, const std:
 bool Bank::balance_inquiry(const std::string& atm_id, const std::string& account_id, const std::string& password) {
     Account* acc = find_account(account_id); // Use find_account here
     if (acc == nullptr) {
-        error_handler.log_error(atm_id, 'B', std::stoi(account_id)); // Account not found error
+        error_handler.log_error(atm_id, 'B', account_id); // Use account_id as std::string here
         return false;
     }
 
     if (acc->authenticate(password)) {
         double balance = acc->view_balance();
-        error_handler.log_success(atm_id, 'B', account_id, balance, 0.0, "");  // Log success for balance inquiry
+        error_handler.log_success(atm_id, 'B', account_id, balance, 0.0);  // Log success for balance inquiry
         return true;
     } else {
-        error_handler.log_error(atm_id, 'B', std::stoi(account_id));  // Incorrect password error
+        error_handler.log_error(atm_id, 'B', account_id);  // Incorrect password error
         return false;
     }
 }
@@ -93,13 +96,13 @@ void Bank::close_account(const std::string& atm_id, const std::string& account_i
     Account* account = find_account(account_id); // Use find_account here
     if (account == nullptr) {
         // If account does not exist, log the error
-        error_handler.log_error(atm_id, 'Q', std::stoi(account_id)); // Account not found error
+        error_handler.log_error(atm_id, 'Q', account_id); // Use account_id as std::string here
         return;
     }
 
     if (account->get_password() != password) {
         // If the password is incorrect, log the error
-        error_handler.log_error(atm_id, 'Q', std::stoi(account_id)); // Incorrect password error
+        error_handler.log_error(atm_id, 'Q', account_id); // Use account_id as std::string here
         return;
     }
 
@@ -108,7 +111,7 @@ void Bank::close_account(const std::string& atm_id, const std::string& account_i
     remove_account(account); // Use remove_account here
 
     // Log the successful closure of the account
-    error_handler.log_success(atm_id, 'Q', account_id, balance, 0.0, ""); // No target account for close
+    error_handler.log_success(atm_id, 'Q', account_id, balance, 0.0); // No target account for close
 }
 
 // Transfer money between accounts
@@ -118,19 +121,19 @@ void Bank::transfer(const std::string& atm_id, const std::string& source_account
 
     if (source_account == nullptr || target_account == nullptr) {
         // If either account does not exist, log an error
-        error_handler.log_error(atm_id, 'T', std::stoi(source_account_id)); // Account not found error
+        error_handler.log_error(atm_id, 'T', source_account_id); // Use source_account_id as std::string here
         return;
     }
 
     if (source_account->get_password() != password) {
         // If the password is incorrect, log the error
-        error_handler.log_error(atm_id, 'T', std::stoi(source_account_id)); // Incorrect password error
+        error_handler.log_error(atm_id, 'T', source_account_id); // Use source_account_id as std::string here
         return;
     }
 
-    if (source_account->get_balance() < amount) {
+    if (source_account->view_balance() < amount) {
         // If there are insufficient funds in the source account, log the error
-        error_handler.log_error(atm_id, 'T', std::stoi(source_account_id), true);  // true indicates insufficient funds
+        error_handler.log_error(atm_id, 'T', source_account_id, true);  // true indicates insufficient funds
         return;
     }
 
@@ -139,7 +142,7 @@ void Bank::transfer(const std::string& atm_id, const std::string& source_account
     target_account->deposit(amount);   // Assuming deposit increases the balance by amount
 
     // Log the successful transfer
-    error_handler.log_success(atm_id, 'T', source_account_id, source_account->get_balance(), amount, target_account_id);
+    error_handler.log_success(atm_id, 'T', source_account_id, source_account->view_balance(), amount);
 }
 
 // Utility function to find an account by its ID
