@@ -9,23 +9,23 @@
 class Bank {
 private:
     std::vector<std::shared_ptr<Account>> accounts;
-    std::shared_ptr<Account> bank_account; // The bank's own account
+    std::shared_ptr<Account> bank_account; // he bank's own account
 
 public:
     // Constructor
     Bank();
 
-    // Methods
-    void create_account(const std::string& atm_id, const std::string& id, const std::string& password, double initial_balance); // Added atm_id
-    bool deposit(const std::string& atm_id, const std::string& id, const std::string& password, double amount); // Added atm_id
-    bool withdraw(const std::string& atm_id, const std::string& id, const std::string& password, double amount); // Added atm_id
-    bool balance_inquiry(const std::string& atm_id, const std::string& account_id, const std::string& password); // Added atm_id
-    void close_account(const std::string& atm_id, const std::string& account_id, const std::string& password); // Added atm_id
-    void transfer(const std::string& atm_id, const std::string& source_account_id, const std::string& password, const std::string& target_account_id, double amount); // Added atm_id
+    //Methods
+    void create_account(const std::string& atm_id, const std::string& id, const std::string& password, double initial_balance);
+    bool deposit(const std::string& atm_id, const std::string& id, const std::string& password, double amount); 
+    bool withdraw(const std::string& atm_id, const std::string& id, const std::string& password, double amount); 
+    bool balance_inquiry(const std::string& atm_id, const std::string& account_id, const std::string& password); 
+    void close_account(const std::string& atm_id, const std::string& account_id, const std::string& password); 
+    void transfer(const std::string& atm_id, const std::string& source_account_id, const std::string& password, const std::string& target_account_id, double amount);
 
-    // Additional methods that may be used in the implementation
-    Account* find_account(const std::string& account_id); // Make sure this is implemented
-    void remove_account(Account* account); // Make sure this is implemented
+    //utility functions
+    Account* find_account(const std::string& account_id); 
+    void remove_account(Account* account); 
 };
 
 #endif // BANK_HPP

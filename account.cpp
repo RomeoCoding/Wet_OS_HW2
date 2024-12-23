@@ -1,6 +1,5 @@
-#include "error_handler.hpp"
-#include <stdexcept>
 #include "account.hpp"
+
 Account::Account(const std::string& id, const std::string& password, double initial_balance)
     : id(id), password(password), balance(initial_balance) {}
 
@@ -25,6 +24,5 @@ void Account::deposit(double amount) {
 }
 
 void Account::withdraw(double amount) {
-    
-        balance -= amount;
+    balance -= amount;
 }
