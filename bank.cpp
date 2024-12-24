@@ -361,7 +361,7 @@ void* Bank::snapshot_thread(void* arg) {
         pthread_mutex_lock(&(bank->snapshot_mutex));
 
         //take a snapshot of the bank's current state
-        bank->statusManager.take_snapshot(bank->accounts);
+        bank->status_manager.take_snapshot(bank->accounts);
 
         pthread_mutex_unlock(&(bank->snapshot_mutex));
 
