@@ -24,8 +24,8 @@ void StatusManager::take_snapshot(const std::vector<std::shared_ptr<Account>>& a
     }
 }
 
-void StatusManager::restore_snapshot(int iterations, std::vector<std::shared_ptr<Account>>& accounts) {
-    if (iterations <= 0 || iterations > snapshots.size()) {
+void StatusManager::restore_snapshot(size_t iterations, std::vector<std::shared_ptr<Account>>& accounts) {
+    if (iterations == 0 || iterations > snapshots.size()) {
         std::cerr << "Error: Invalid rollback iterations\n";
         return;
     }
@@ -33,3 +33,4 @@ void StatusManager::restore_snapshot(int iterations, std::vector<std::shared_ptr
     snapshot.restore(accounts);
     std::cout << "Rollback to " << iterations << " iterations ago completed successfully.\n";
 }
+
