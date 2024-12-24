@@ -7,7 +7,7 @@
 #include <string>
 #include <pthread.h>
 #include <unistd.h>  
-#include <status_snapshot.hpp>
+#include "status_snapshot.hpp"
 
 class Bank {
 private:
