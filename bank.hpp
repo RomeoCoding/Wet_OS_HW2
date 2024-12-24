@@ -16,9 +16,9 @@ private:
 
     // Mutex to synchronize print access if needed (optional)
     mutable pthread_mutex_t print_mutex = PTHREAD_MUTEX_INITIALIZER;
-
+    pthread_mutex_t snapshot_mutex = PTHREAD_MUTEX_INITIALIZER;
     //Object to manage status snapshots
-    StatusManager status_manager;
+    StatusManager status_manager; 
 
 
 public:
