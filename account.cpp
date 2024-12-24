@@ -1,5 +1,5 @@
 #include "account.hpp"
-
+#include <iostream>
 Account::Account(const std::string& id, const std::string& password, double initial_balance)
     : id(id), password(password), balance(initial_balance) {}
 
@@ -25,4 +25,9 @@ void Account::deposit(double amount) {
 
 void Account::withdraw(double amount) {
     balance -= amount;
+}
+
+
+void Account::print_account_details() const {
+    std::cout << "Account " << id << ": Balance - " << balance << " $, Account Password - " << password << std::endl;
 }
