@@ -19,6 +19,7 @@ public:
     bool authenticate(const std::string& input_password) const;
     void withdraw(double amount);
     void deposit(double amount);
+    void print_account_details() const;
 
 };
 
