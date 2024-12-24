@@ -1,9 +1,10 @@
 #ifndef STATUS_SNAPSHOT_HPP
 #define STATUS_SNAPSHOT_HPP
 
+#include <deque>
 #include <vector>
 #include <memory>
-#include "bank.hpp"  
+#include "account.hpp"
 
 class StatusSnapshot {
 public:
@@ -21,7 +22,7 @@ public:
     void take_snapshot(const std::vector<std::shared_ptr<Account>>& accounts);
 
     //Restore the bank's state from a snapshot
-    void restore_snapshot(int iterations, std::vector<std::shared_ptr<Account>>& accounts);
+    void restore_snapshot(size_t iterations, std::vector<std::shared_ptr<Account>>& accounts);
 
 private:
     //A list of snapshots (maximum size 120)
