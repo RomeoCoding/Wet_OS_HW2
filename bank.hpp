@@ -5,15 +5,24 @@
 #include <vector>
 #include <memory>
 #include <string>
+#include <pthread.h>
+#include <unistd.h>  
 
 class Bank {
 private:
     std::vector<std::shared_ptr<Account>> accounts;
     std::shared_ptr<Account> bank_account; // he bank's own account
 
+    // Mutex to synchronize print access if needed (optional)
+    mutable pthread_mutex_t print_mutex = PTHREAD_MUTEX_INITIALIZER;
+
 public:
     // Constructor
     Bank();
+    
+    // Threads for printing account details
+    void start_account_print_thread();
+    void start_withdrawal_thread();
 
     //Methods
     void create_account(const std::string& atm_id, const std::string& id, const std::string& password, double initial_balance);
@@ -26,6 +35,12 @@ public:
     //utility functions
     Account* find_account(const std::string& account_id); 
     void remove_account(Account* account); 
+    void print_all_accounts() const;
+
+    //thread functions
+    static void* print_accounts_periodically(void* arg);  
+    static void* withdraw_from_accounts(void* arg);
+
 };
 
 #endif // BANK_HPP
