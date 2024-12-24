@@ -3,8 +3,7 @@
 #include <string>
 #include "bank.hpp"
 #include "procedure_handler.hpp"
-
-//for now this works with one thread only
+#include <pthread.h>
 
 int main(int argc, char* argv[]) {
     if (argc < 2) {
@@ -22,14 +21,23 @@ int main(int argc, char* argv[]) {
 
     Bank bank;
     std::string atm_id = "ATM001"; 
-    std::string command;
 
+    // Process commands from the file
+    std::string command;
     while (std::getline(command_file, command)) {
         if (!command.empty()) {
             process_command(command, bank, atm_id);
         }
     }
 
+    // Close the command file after reading
     command_file.close();
+
+    // Keep the main function alive to allow the print thread to keep running
+    while (true) {
+        // Optionally, you can add a small delay here or handle signals to gracefully exit
+        sleep(1);  // Sleep 1 second to prevent the main function from exiting
+    }
+
     return 0;
 }
