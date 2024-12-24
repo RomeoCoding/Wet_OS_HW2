@@ -2,6 +2,7 @@
 #define ERROR_HANDLER_HPP
 
 #include <string>
+extern std::ofstream log_file;
 
 class ErrorHandler {
 public:
