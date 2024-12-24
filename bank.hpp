@@ -7,6 +7,7 @@
 #include <string>
 #include <pthread.h>
 #include <unistd.h>  
+#include <status_snapshot.hpp>
 
 class Bank {
 private:
@@ -16,13 +17,18 @@ private:
     // Mutex to synchronize print access if needed (optional)
     mutable pthread_mutex_t print_mutex = PTHREAD_MUTEX_INITIALIZER;
 
+    //Object to manage status snapshots
+    StatusManager status_manager;
+
+
 public:
-    // Constructor
+    //Constructor
     Bank();
     
-    // Threads for printing account details
+    //Threads for printing account details
     void start_account_print_thread();
     void start_withdrawal_thread();
+    void start_snapshot_thread();
 
     //Methods
     void create_account(const std::string& atm_id, const std::string& id, const std::string& password, double initial_balance);
@@ -31,6 +37,7 @@ public:
     bool balance_inquiry(const std::string& atm_id, const std::string& account_id, const std::string& password); 
     void close_account(const std::string& atm_id, const std::string& account_id, const std::string& password); 
     void transfer(const std::string& atm_id, const std::string& source_account_id, const std::string& password, const std::string& target_account_id, double amount);
+    void rollback(int iterations); //havent implemented this yet
 
     //utility functions
     Account* find_account(const std::string& account_id); 
@@ -40,6 +47,7 @@ public:
     //thread functions
     static void* print_accounts_periodically(void* arg);  
     static void* withdraw_from_accounts(void* arg);
+    static void* snapshot_thread(void* arg);
 
 };
 

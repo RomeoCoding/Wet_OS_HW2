@@ -21,6 +21,7 @@ Bank::Bank() {
     //Creating threads for periodic functions
     start_account_print_thread();
     start_withdrawal_thread();
+    start_snapshot_thread();
 
 }
 
@@ -261,13 +262,31 @@ void Bank::start_withdrawal_thread() {
     }
 }
 
+
+
+void Bank::start_snapshot_thread() {
+    pthread_t thread_id;
+
+    // Create a new thread for periodically taking snapshots
+    if (pthread_create(&thread_id, nullptr, snapshot_thread, (void*)this) != 0) {
+        std::cerr << "Error creating snapshot thread!" << std::endl;
+    }
+}
+
+
 /*
 ==========================
 === Periodic Functions ===
 ==========================
 */
 
-// Static thread function to print all accounts' details every 5 seconds
+/*
+==========================
+ Printing periodically 
+==========================
+*/
+
+//Static thread function to print all accounts' details every 5 seconds
 void* Bank::print_accounts_periodically(void* arg) {
     Bank* bank = static_cast<Bank*>(arg);  // Cast the void* argument to Bank*
 
@@ -280,6 +299,12 @@ void* Bank::print_accounts_periodically(void* arg) {
 
     return nullptr;
 }
+
+/*
+==========================
+ Withdrawing periodically 
+==========================
+*/
 
 //Static thread function to withdraw commissions from accounts every 3 seconds
 void* Bank::withdraw_from_accounts(void* arg) {
@@ -322,5 +347,26 @@ void* Bank::withdraw_from_accounts(void* arg) {
     return nullptr;
 }
 
+/*
+==========================
+ Snapshotting periodically 
+==========================
+*/
 
+void* Bank::snapshot_thread(void* arg) {
+    Bank* bank = static_cast<Bank*>(arg);
+
+    while (true) {
+        sleep(5);  //for now i put 5 for testing purposes
+        pthread_mutex_lock(&(bank->snapshot_mutex));
+
+        //take a snapshot of the bank's current state
+        bank->statusManager.take_snapshot(bank->accounts);
+
+        pthread_mutex_unlock(&(bank->snapshot_mutex));
+
+        std::cout << "Snapshot taken!" << std::endl;
+    }
+    return nullptr;
+}
 
