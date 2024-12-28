@@ -2,6 +2,7 @@
 #include <sstream>
 #include <iostream>
 
+extern std::ofstream log_file;  // For logging
 
 // Main command processing function
 void process_command(const std::string& command, Bank& bank, const std::string& atm_id) {
@@ -21,9 +22,29 @@ void process_command(const std::string& command, Bank& bank, const std::string& 
         case 'B': handle_balance_inquiry(stream, bank, atm_id); break;
         case 'T': handle_transfer(stream, bank, atm_id); break;
         case 'Q': handle_close_account(stream, bank, atm_id); break;
+        case 'R': handle_rollback(stream, bank, atm_id); break;  
         default:
             std::cerr << "Unknown action: " << action << " in command: " << command << std::endl;
     }
+}
+
+void handle_rollback(std::istringstream& stream, Bank& bank, const std::string& atm_id) {
+    int iterations;
+    stream >> iterations;
+
+    if (stream.fail()) {
+        std::cerr << "Invalid parameters for rollback" << std::endl;
+        return;
+    }
+
+    // Call restore_snapshot to perform the rollback using the correct parameters
+    bank.restore_snapshot(iterations);  // No need to pass accounts or main_account
+
+    /*// Log the rollback action
+    if (log_file.is_open()) {
+        log_file << atm_id << ": Rollback to " << iterations << " bank iterations ago was completed successfully\n";
+    }
+    */
 }
 
 // Helper function implementations

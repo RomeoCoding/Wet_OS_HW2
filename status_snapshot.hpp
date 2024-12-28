@@ -1,28 +1,27 @@
-#ifndef STATUS_SNAPSHOT_HPP
+/*#ifndef STATUS_SNAPSHOT_HPP
 #define STATUS_SNAPSHOT_HPP
 
 #include <deque>
 #include <vector>
 #include <memory>
-#include "account.hpp"
+#include "account.hpp"  
+#include "bank.hpp"
+extern Bank bank;
 
 class StatusSnapshot {
 public:
-    StatusSnapshot(const std::vector<std::shared_ptr<Account>>& accounts);
+    StatusSnapshot(Bank& bank);
 
-    //Method to restore the bank's state from this snapshot
-    void restore(std::vector<std::shared_ptr<Account>>& accounts) const;
+    void restore(Bank& bank);
 
 private:
     std::vector<std::shared_ptr<Account>> accounts_snapshot;
+    std::shared_ptr<Account> main_account_snapshot;  
 };
-
 class StatusManager {
 public:
-    void take_snapshot(const std::vector<std::shared_ptr<Account>>& accounts);
-
-    //Restore the bank's state from a snapshot
-    void restore_snapshot(size_t iterations, std::vector<std::shared_ptr<Account>>& accounts);
+    void take_snapshot();
+    void restore_snapshot(size_t iterations);
 
 private:
     //A list of snapshots (maximum size 120)

@@ -14,5 +14,5 @@ void handle_withdraw(std::istringstream& stream, Bank& bank, const std::string& 
 void handle_balance_inquiry(std::istringstream& stream, Bank& bank, const std::string& atm_id);
 void handle_transfer(std::istringstream& stream, Bank& bank, const std::string& atm_id);
 void handle_close_account(std::istringstream& stream, Bank& bank, const std::string& atm_id);
-
+void handle_rollback(std::istringstream& stream, Bank& bank, const std::string& atm_id);
 #endif // PROCEDURE_HANDLER_HPP

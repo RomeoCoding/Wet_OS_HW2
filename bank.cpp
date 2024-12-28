@@ -9,7 +9,8 @@
 #include <iomanip>
 #include <sstream>  
 #include <fstream>
-
+#include "procedure_handler.hpp"
+Bank bank;
 ErrorHandler error_handler;
 
 
@@ -27,15 +28,14 @@ Bank::Bank() {
 
 void Bank::create_account(const std::string& atm_id, const std::string& id, const std::string& password, double initial_balance) {
     if (find_account(id) != nullptr) {
-        //Log the error if account with the same ID already exists
         error_handler.log_error(atm_id, 'O', id); 
         return; 
     }
-    accounts.push_back(std::make_shared<Account>(id, password, initial_balance));
-    //Log success
+    
+    auto new_account = std::make_shared<Account>(id, password, initial_balance);
+    add_account_to_list(new_account); 
     error_handler.log_success(atm_id, 'O', id, initial_balance, 0.0);
 }
-
 /*
 =========================
 ======== Deposit ========
@@ -123,25 +123,20 @@ bool Bank::balance_inquiry(const std::string& atm_id, const std::string& account
 void Bank::close_account(const std::string& atm_id, const std::string& account_id, const std::string& password) {
     Account* account = find_account(account_id); // Use find_account here
     if (account == nullptr) {
-        // If account does not exist, log the error
         error_handler.log_error(atm_id, 'Q', account_id);
         return;
     }
 
     if (account->get_password() != password) {
-        // If the password is incorrect, log the error
         error_handler.log_error(atm_id, 'Q', account_id); 
         return;
     }
 
-    // If password is correct, close the account
     double balance = account->view_balance();
-    remove_account(account); // Use remove_account here
+    remove_account_from_list(account); // Use remove_account_from_list here
 
-    // Log the successful closure of the account
     error_handler.log_success(atm_id, 'Q', account_id, balance, 0.0); // No target account for close
 }
-
 /*
 =========================
 ======== Transfer =======
@@ -177,6 +172,110 @@ void Bank::transfer(const std::string& atm_id, const std::string& source_account
     // Log the successful transfer
     error_handler.log_success(atm_id, 'T', source_account_id, source_account->view_balance(), amount);
 }
+void Bank::rollback(int iterations){
+    restore_snapshot(iterations);
+}
+/*
+=========================
+=====Snapshot Methods====
+=========================
+*/
+
+void Bank::take_snapshot() {
+    account_list_snapshots.push_front(accounts);
+    main_account_snapshot.push_front(std::make_shared<Account>(*bank_account));
+
+    if (account_list_snapshots.size() > MAX_SNAPSHOTS) {
+        account_list_snapshots.pop_back();
+    }
+    if (main_account_snapshot.size() > MAX_SNAPSHOTS) {
+        main_account_snapshot.pop_back();
+    }
+    if (log_file.is_open()) {
+        time_t now = time(0);
+        std::string timestamp = ctime(&now);
+        timestamp.pop_back();  // Remove the newline character from timestamp
+        log_file << "Snapshot taken at: " << timestamp << std::endl;
+    }
+}
+
+void Bank::restore_snapshot(size_t iterations) {
+    if (iterations == 0 || iterations > account_list_snapshots.size()) {
+        std::cerr << "Error: Invalid rollback iterations\n";
+        return;
+    }
+    accounts = account_list_snapshots[iterations - 1];  
+    bank_account = std::make_shared<Account>(*main_account_snapshot[iterations - 1]); 
+
+    std::cout << "Rollback to " << iterations << " iterations ago completed successfully.\n";
+}
+
+//WEE
+
+
+/*
+=========================
+====Process Commands=====
+=========================
+*/
+
+
+/*
+=========================
+=======ATM Methods=======
+=========================
+*/
+
+//Initialise the threads for each ATM
+//By calling the constructor of the ATM class, we can pass the ATM ID, the file path, and the Bank pointer
+//then we push the atm into the atms vector
+void Bank::initialize_atms(const std::vector<std::string>& file_paths) {
+    for (size_t i = 0; i < file_paths.size(); ++i) {
+        std::string atm_id = "ATM" + std::to_string(i + 1); // Generate ATM IDs
+        atms.emplace_back(std::unique_ptr<ATM>(new ATM(atm_id, file_paths[i])));
+    }
+}
+
+
+//Join the threads for each ATM
+//this function joins the threads for each ATM
+void Bank::join_atm_threads() {
+    for (pthread_t& thread : atm_threads) {
+        pthread_join(thread, nullptr);
+    }
+}
+
+
+//Join the threads for each ATM
+//this function starts the threads for each ATM and
+//pushes the threads into the atm_threads vector
+void Bank::start_atm_threads() {
+    for (const auto& atm : atms) {
+        pthread_t thread_id;
+
+        if (pthread_create(&thread_id, nullptr, [](void* arg) -> void* {
+                ATM* atm = static_cast<ATM*>(arg);
+                std::ifstream file(atm->get_input_file());
+                if (!file.is_open()) {
+                    std::cerr << "Error: Unable to open file " << atm->get_input_file() 
+                              << " for ATM " << atm->get_id() << std::endl;
+                    return nullptr; 
+                }
+                std::string command;
+                while (std::getline(file, command)) {
+                    process_command(command, *static_cast<Bank*>(arg), atm->get_id());
+                }
+                file.close();
+                return nullptr;  
+            }, this) != 0) {  
+            std::cerr << "Error creating thread for ATM " << atm->get_id() << std::endl;
+        }
+
+        atm_threads.push_back(thread_id);
+    }
+
+    join_atm_threads();
+}
 
 
 /*
@@ -198,13 +297,11 @@ Account* Bank::find_account(const std::string& account_id) {
 
 // Remove an account by its pointer
 void Bank::remove_account(Account* account) {
-    // Find and remove the account from the vector
     auto it = std::remove_if(accounts.begin(), accounts.end(), 
         [account](const std::shared_ptr<Account>& acc) {
-            return acc.get() == account; // Compare raw pointers
+            return acc.get() == account; 
         });
 
-    // If account was found, erase it from the vector
     if (it != accounts.end()) {
         accounts.erase(it, accounts.end());
     }
@@ -235,6 +332,34 @@ void Bank::print_all_accounts() const {
     }
 
     std::cout << std::endl;  // Add a newline after printing all accounts
+}
+
+std::vector<std::shared_ptr<Account>>& Bank::get_accounts() {
+    return accounts;
+}
+
+
+std::shared_ptr<Account>& Bank::get_bank_account() {
+    return bank_account;
+}
+
+//We need add and remove because standard push_back does not
+//account for race conditions in multithreaded environments
+//so we need to lock the mutex before adding/removing accounts
+
+void Bank::add_account_to_list(std::shared_ptr<Account> account) {
+    accounts.push_back(account);
+}
+
+void Bank::remove_account_from_list(Account* account) {
+    auto it = std::remove_if(accounts.begin(), accounts.end(), 
+        [account](const std::shared_ptr<Account>& acc) {
+            return acc.get() == account; 
+        });
+
+    if (it != accounts.end()) {
+        accounts.erase(it, accounts.end());
+    }
 }
 
 /*
@@ -352,21 +477,22 @@ void* Bank::withdraw_from_accounts(void* arg) {
  Snapshotting periodically 
 ==========================
 */
-
 void* Bank::snapshot_thread(void* arg) {
-    Bank* bank = static_cast<Bank*>(arg);
+    Bank* bank = static_cast<Bank*>(arg); 
 
     while (true) {
-        sleep(5);  //for now i put 5 for testing purposes
-        pthread_mutex_lock(&(bank->snapshot_mutex));
+        sleep(5);  // Periodically take a snapshot (5 seconds interval, for example)
 
-        //take a snapshot of the bank's current state
-        bank->status_manager.take_snapshot(bank->accounts);
+        pthread_mutex_lock(&(bank->snapshot_mutex)); 
 
-        pthread_mutex_unlock(&(bank->snapshot_mutex));
+        // Directly call the Bank's take_snapshot method
+        bank->take_snapshot();  // Take snapshot without needing accounts explicitly
 
-        std::cout << "Snapshot taken!" << std::endl;
+        pthread_mutex_unlock(&(bank->snapshot_mutex)); 
     }
+
     return nullptr;
 }
+
+
 
