@@ -1,43 +1,24 @@
-#include <iostream>
-#include <fstream>
-#include <string>
 #include "bank.hpp"
-#include "procedure_handler.hpp"
-#include <pthread.h>
+#include <iostream>
+#include <vector>
+#include <string>
 
 int main(int argc, char* argv[]) {
     if (argc < 2) {
-        std::cerr << "Usage: " << argv[0] << " <path_to_command_file>" << std::endl;
-        return 1;
-    }
-
-    std::string file_path = argv[1];
-    std::ifstream command_file(file_path);
-
-    if (!command_file.is_open()) {
-        std::cerr << "Failed to open the file: " << file_path << std::endl;
+        std::cerr << "Usage: " << argv[0] << " <input_file1> <input_file2> ... <input_fileN>" << std::endl;
         return 1;
     }
 
     Bank bank;
-    std::string atm_id = "ATM001"; 
+    std::vector<std::string> input_files;
 
-    // Process commands from the file
-    std::string command;
-    while (std::getline(command_file, command)) {
-        if (!command.empty()) {
-            process_command(command, bank, atm_id);
-        }
+    for (int i = 1; i < argc; ++i) {
+        input_files.push_back(argv[i]);
     }
 
-    // Close the command file after reading
-    command_file.close();
+    bank.initialize_atms(input_files);
 
-    // Keep the main function alive to allow the print thread to keep running
-    while (true) {
-        // Optionally, you can add a small delay here or handle signals to gracefully exit
-        sleep(1);  // Sleep 1 second to prevent the main function from exiting
-    }
+    bank.start_atm_threads();
 
     return 0;
 }
