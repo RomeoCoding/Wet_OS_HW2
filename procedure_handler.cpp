@@ -4,6 +4,16 @@
 
 extern std::ofstream log_file;  // For logging
 
+//Utilities
+bool is_command_persistent(const std::string& command) {
+    return command.find("PERSISTENT") != std::string::npos;
+}
+
+std::string remove_persistent_keyword(const std::string& command) {
+    return command.substr(0, command.find("PERSISTENT") - 1);
+}
+
+
 // Main command processing function
 void process_command(const std::string& command, Bank& bank, const std::string& atm_id) {
     std::istringstream stream(command);
@@ -27,6 +37,46 @@ void process_command(const std::string& command, Bank& bank, const std::string& 
             std::cerr << "Unknown action: " << action << " in command: " << command << std::endl;
     }
 }
+
+void execute_command_with_retries(const std::string& command,const std::string& atm_id, bool is_persistent) {
+    bool first_attempt = true;
+
+    do {
+        bool success = process_command(command, *this, atm->get_id());
+        if (success) {
+            break;
+        }
+
+        if (is_persistent) {
+            if (first_attempt) {
+                first_attempt = false; 
+            } else {
+                log_command_failure(command, atm->get_id());
+                break; 
+            }
+            usleep(100000); 
+        } else {
+            log_command_failure(command, atm->get_id());
+            break;
+        }
+    } while (true);
+}
+
+
+void process_atm_commands(std::ifstream& file, const std::string& atm_id) {
+    std::string command;
+    while (std::getline(file, command)) {
+        if (command.empty()) continue;
+
+        bool is_persistent = is_command_persistent(command);
+        if (is_persistent) {
+            command = remove_persistent_keyword(command);
+        }
+
+        execute_command_with_retries(command, atm_id, is_persistent);
+    }
+}
+
 
 void handle_rollback(std::istringstream& stream, Bank& bank, const std::string& atm_id) {
     int iterations;
