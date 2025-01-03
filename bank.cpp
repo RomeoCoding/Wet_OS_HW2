@@ -43,22 +43,20 @@ void Bank::create_account(const std::string& atm_id, const std::string& id, cons
 */
 
 bool Bank::deposit(const std::string& atm_id, const std::string& id, const std::string& password, double amount) {
-    Account* acc = find_account(id); // Use find_account here
+    Account* acc = find_account(id); 
     if (acc == nullptr) {
-        error_handler.log_error(atm_id, 'D', id); // Use id as std::string here
+        error_handler.log_error(atm_id, 'D', id); 
         return false;
     }
 
-    // Check if the password is correct
     if (!acc->authenticate(password)) {
-        error_handler.log_error(atm_id, 'D', id); // Use id as std::string here
+        error_handler.log_error(atm_id, 'D', id); 
         return false;
     }
 
-    // Perform the deposit and log success
     acc->deposit(amount);
-    error_handler.log_success(atm_id, 'D', id, acc->view_balance(), amount); // No target account for deposit
-    return true; // Successful deposit
+    error_handler.log_success(atm_id, 'D', id, acc->view_balance(), amount); 
+    return true; 
 }
 
 /*
@@ -68,28 +66,25 @@ bool Bank::deposit(const std::string& atm_id, const std::string& id, const std::
 */
 
 bool Bank::withdraw(const std::string& atm_id, const std::string& id, const std::string& password, double amount) {
-    Account* acc = find_account(id); // Use find_account here
+    Account* acc = find_account(id); 
     if (acc == nullptr) {
-        error_handler.log_error(atm_id, 'W', id); // Use id as std::string here
+        error_handler.log_error(atm_id, 'W', id); 
         return false;
     }
 
-    // Check if the password is correct
     if (!acc->authenticate(password)) {
         error_handler.log_error(atm_id, 'W', id); 
         return false;
     }
 
-    // Check if balance is sufficient for withdrawal
     if (acc->view_balance() < amount) {
-        error_handler.log_error(atm_id, 'W', id, true); // true indicates insufficient funds
+        error_handler.log_error(atm_id, 'W', id, true); 
         return false;
     }
 
-    // Perform the withdrawal and log success
     acc->withdraw(amount);
-    error_handler.log_success(atm_id, 'W', id, acc->view_balance(), amount); // No target account for withdrawal
-    return true; // Successful withdrawal
+    error_handler.log_success(atm_id, 'W', id, acc->view_balance(), amount); 
+    return true; 
 }
 
 /*
@@ -99,18 +94,18 @@ bool Bank::withdraw(const std::string& atm_id, const std::string& id, const std:
 */
 
 bool Bank::balance_inquiry(const std::string& atm_id, const std::string& account_id, const std::string& password) {
-    Account* acc = find_account(account_id); // Use find_account here
+    Account* acc = find_account(account_id); 
     if (acc == nullptr) {
-        error_handler.log_error(atm_id, 'B', account_id); // Use account_id as std::string here
+        error_handler.log_error(atm_id, 'B', account_id); 
         return false;
     }
 
     if (acc->authenticate(password)) {
         double balance = acc->view_balance();
-        error_handler.log_success(atm_id, 'B', account_id, balance, 0.0);  // Log success for balance inquiry
+        error_handler.log_success(atm_id, 'B', account_id, balance, 0.0); 
         return true;
     } else {
-        error_handler.log_error(atm_id, 'B', account_id);  // Incorrect password error
+        error_handler.log_error(atm_id, 'B', account_id);  
         return false;
     }
 }
@@ -121,7 +116,7 @@ bool Bank::balance_inquiry(const std::string& atm_id, const std::string& account
 =========================
 */
 void Bank::close_account(const std::string& atm_id, const std::string& account_id, const std::string& password) {
-    Account* account = find_account(account_id); // Use find_account here
+    Account* account = find_account(account_id); 
     if (account == nullptr) {
         error_handler.log_error(atm_id, 'Q', account_id);
         return;
@@ -133,9 +128,9 @@ void Bank::close_account(const std::string& atm_id, const std::string& account_i
     }
 
     double balance = account->view_balance();
-    remove_account_from_list(account); // Use remove_account_from_list here
+    remove_account_from_list(account); 
 
-    error_handler.log_success(atm_id, 'Q', account_id, balance, 0.0); // No target account for close
+    error_handler.log_success(atm_id, 'Q', account_id, balance, 0.0);
 }
 /*
 =========================
@@ -245,6 +240,19 @@ void Bank::join_atm_threads() {
     }
 }
 
+void* Bank::atm_thread_function(void* arg) {
+    ATM* atm = static_cast<ATM*>(arg);
+    std::ifstream file(atm->get_input_file());
+
+    if (!file.is_open()) {
+        log_file_error(atm->get_input_file(), atm->get_id());
+        return nullptr;
+    }
+
+    process_atm_commands(file, atm->get_id());
+    file.close();
+    return nullptr;
+}
 
 //Join the threads for each ATM
 //this function starts the threads for each ATM and
@@ -253,29 +261,16 @@ void Bank::start_atm_threads() {
     for (const auto& atm : atms) {
         pthread_t thread_id;
 
-        if (pthread_create(&thread_id, nullptr, [](void* arg) -> void* {
-                ATM* atm = static_cast<ATM*>(arg);
-                std::ifstream file(atm->get_input_file());
-                if (!file.is_open()) {
-                    std::cerr << "Error: Unable to open file " << atm->get_input_file() 
-                              << " for ATM " << atm->get_id() << std::endl;
-                    return nullptr; 
-                }
-                std::string command;
-                while (std::getline(file, command)) {
-                    process_command(command, *static_cast<Bank*>(arg), atm->get_id());
-                }
-                file.close();
-                return nullptr;  
-            }, this) != 0) {  
+        if (pthread_create(&thread_id, nullptr, atm_thread_function, atm.get()) != 0) {
             std::cerr << "Error creating thread for ATM " << atm->get_id() << std::endl;
+        } else {
+            atm_threads.push_back(thread_id);
         }
-
-        atm_threads.push_back(thread_id);
     }
 
     join_atm_threads();
 }
+
 
 
 /*
@@ -348,10 +343,13 @@ std::shared_ptr<Account>& Bank::get_bank_account() {
 //so we need to lock the mutex before adding/removing accounts
 
 void Bank::add_account_to_list(std::shared_ptr<Account> account) {
+    pthread_rwlock_wrlock(&accounts_rwlock);
     accounts.push_back(account);
+    pthread_rwlock_unlock(&accounts_rwlock); 
 }
 
 void Bank::remove_account_from_list(Account* account) {
+    pthread_rwlock_wrlock(&accounts_rwlock); 
     auto it = std::remove_if(accounts.begin(), accounts.end(), 
         [account](const std::shared_ptr<Account>& acc) {
             return acc.get() == account; 
@@ -360,8 +358,8 @@ void Bank::remove_account_from_list(Account* account) {
     if (it != accounts.end()) {
         accounts.erase(it, accounts.end());
     }
+    pthread_rwlock_unlock(&accounts_rwlock); 
 }
-
 /*
 ========================
 === Starting Threads ===
