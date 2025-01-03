@@ -17,9 +17,10 @@ private:
     std::vector<std::unique_ptr<ATM>> atms; 
     std::vector<pthread_t> atm_threads; 
 
-    //Mutex to synchronize print access if needed (optional)
+    //Mutexes for thread synchronization
     mutable pthread_mutex_t print_mutex = PTHREAD_MUTEX_INITIALIZER;
     pthread_mutex_t snapshot_mutex = PTHREAD_MUTEX_INITIALIZER;
+    pthread_rwlock_t accounts_rwlock = PTHREAD_RWLOCK_INITIALIZER;
     
     //Managing snapshots for rollback
     std::deque<std::vector<std::shared_ptr<Account>>> account_list_snapshots;
@@ -44,6 +45,8 @@ public:
     void initialize_atms(const std::vector<std::string>& file_paths);
     void start_atm_threads();
     void join_atm_threads();
+    static void* atm_thread_function(void* arg);
+
 
     //Methods
     void create_account(const std::string& atm_id, const std::string& id, const std::string& password, double initial_balance);
