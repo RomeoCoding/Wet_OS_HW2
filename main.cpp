@@ -1,35 +1,24 @@
-#include <iostream>
-#include <fstream>
-#include <string>
 #include "bank.hpp"
-#include "procedure_handler.hpp"
-
-//for now this works with one thread only
+#include <iostream>
+#include <vector>
+#include <string>
 
 int main(int argc, char* argv[]) {
     if (argc < 2) {
-        std::cerr << "Usage: " << argv[0] << " <path_to_command_file>" << std::endl;
-        return 1;
-    }
-
-    std::string file_path = argv[1];
-    std::ifstream command_file(file_path);
-
-    if (!command_file.is_open()) {
-        std::cerr << "Failed to open the file: " << file_path << std::endl;
+        std::cerr << "Usage: " << argv[0] << " <NumberOfVipThreads> <input_file1> <input_file2> ... <input_fileN>" << std::endl;
         return 1;
     }
 
     Bank bank;
-    std::string atm_id = "ATM001"; 
-    std::string command;
-
-    while (std::getline(command_file, command)) {
-        if (!command.empty()) {
-            process_command(command, bank, atm_id);
-        }
+    std::vector<std::string> input_files;
+    int vip_threads_number = atoi(argv[1]);
+    for (int i = 2; i < argc; ++i) {
+        input_files.push_back(argv[i]);
     }
 
-    command_file.close();
+    bank.initialize_atms(input_files);
+
+    bank.start_atm_threads(vip_threads_number);
+
     return 0;
 }
