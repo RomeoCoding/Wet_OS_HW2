@@ -26,15 +26,22 @@ Bank::Bank() {
 
 }
 
-void Bank::create_account(const std::string& atm_id, const std::string& id, const std::string& password, double initial_balance) {
+bool Bank::create_account(const std::string& atm_id, const std::string& id, const std::string& password, double initial_balance) {
+    // from here it should be locked
+    //reason to lock form here is that you dont want more than thread creating mutiple accounts with the same id
+    //we also until finishing this we dont want anyone to read account with the id we are creating
+    pthread_mutex_lock(accounts_lock);
     if (find_account(id) != nullptr) {
         error_handler.log_error(atm_id, 'O', id); 
-        return; 
+        return false; 
     }
     
     auto new_account = std::make_shared<Account>(id, password, initial_balance);
     add_account_to_list(new_account); 
     error_handler.log_success(atm_id, 'O', id, initial_balance, 0.0);
+    pthread_mutex_unlock(accounts_lock);
+    return true;
+    //to here
 }
 /*
 =========================
@@ -43,6 +50,7 @@ void Bank::create_account(const std::string& atm_id, const std::string& id, cons
 */
 
 bool Bank::deposit(const std::string& atm_id, const std::string& id, const std::string& password, double amount) {
+   
     Account* acc = find_account(id); 
     if (acc == nullptr) {
         error_handler.log_error(atm_id, 'D', id); 
@@ -53,7 +61,7 @@ bool Bank::deposit(const std::string& atm_id, const std::string& id, const std::
         error_handler.log_error(atm_id, 'D', id); 
         return false;
     }
-
+    
     acc->deposit(amount);
     error_handler.log_success(atm_id, 'D', id, acc->view_balance(), amount); 
     return true; 
@@ -66,6 +74,7 @@ bool Bank::deposit(const std::string& atm_id, const std::string& id, const std::
 */
 
 bool Bank::withdraw(const std::string& atm_id, const std::string& id, const std::string& password, double amount) {
+
     Account* acc = find_account(id); 
     if (acc == nullptr) {
         error_handler.log_error(atm_id, 'W', id); 
@@ -83,7 +92,9 @@ bool Bank::withdraw(const std::string& atm_id, const std::string& id, const std:
     }
 
     acc->withdraw(amount);
-    error_handler.log_success(atm_id, 'W', id, acc->view_balance(), amount); 
+    error_handler.log_success(atm_id, 'W', id, acc->view_balance(), amount);
+
+   
     return true; 
 }
 
@@ -94,11 +105,13 @@ bool Bank::withdraw(const std::string& atm_id, const std::string& id, const std:
 */
 
 bool Bank::balance_inquiry(const std::string& atm_id, const std::string& account_id, const std::string& password) {
+
     Account* acc = find_account(account_id); 
     if (acc == nullptr) {
         error_handler.log_error(atm_id, 'B', account_id); 
         return false;
     }
+   
 
     if (acc->authenticate(password)) {
         double balance = acc->view_balance();
@@ -115,22 +128,27 @@ bool Bank::balance_inquiry(const std::string& atm_id, const std::string& account
 ========= Close =========
 =========================
 */
-void Bank::close_account(const std::string& atm_id, const std::string& account_id, const std::string& password) {
+bool Bank::close_account(const std::string& atm_id, const std::string& account_id, const std::string& password) {
+    //addtional lock for deleting should be added not sure how to do it
     Account* account = find_account(account_id); 
     if (account == nullptr) {
         error_handler.log_error(atm_id, 'Q', account_id);
-        return;
+        return false;
     }
 
     if (account->get_password() != password) {
         error_handler.log_error(atm_id, 'Q', account_id); 
-        return;
+        return false;
     }
 
     double balance = account->view_balance();
-    remove_account_from_list(account); 
+    if(remove_account_from_list(account)) 
+    {
+        error_handler.log_success(atm_id, 'Q', account_id, balance, 0.0);
+        return true;
+    } 
 
-    error_handler.log_success(atm_id, 'Q', account_id, balance, 0.0);
+    return false;
 }
 /*
 =========================
@@ -153,15 +171,15 @@ void Bank::transfer(const std::string& atm_id, const std::string& source_account
         error_handler.log_error(atm_id, 'T', source_account_id);
         return;
     }
-
-    if (source_account->view_balance() < amount) {
+    
+    //here was error where you could view the balance but the balance can change until you withdraw
+    if (!source_account->withdraw(amount)) {
         // If there are insufficient funds in the source account, log the error
         error_handler.log_error(atm_id, 'T', source_account_id, true);  // true indicates insufficient funds
         return;
     }
 
     // Perform the transfer
-    source_account->withdraw(amount);  
     target_account->deposit(amount);   
 
     // Log the successful transfer
@@ -194,15 +212,21 @@ void Bank::take_snapshot() {
     }
 }
 
-void Bank::restore_snapshot(size_t iterations) {
+
+//for this function the caller should make sure threads are locked
+bool Bank::restore_snapshot(size_t iterations) {
     if (iterations == 0 || iterations > account_list_snapshots.size()) {
         std::cerr << "Error: Invalid rollback iterations\n";
-        return;
+        return false;
     }
+
+    //pthread_mutex_lock(&accounts_lock);
     accounts = account_list_snapshots[iterations - 1];  
     bank_account = std::make_shared<Account>(*main_account_snapshot[iterations - 1]); 
 
     std::cout << "Rollback to " << iterations << " iterations ago completed successfully.\n";
+    //pthread_mutex_unlock(&accounts_lock);
+    return true;
 }
 
 //WEE
@@ -224,7 +248,8 @@ void Bank::restore_snapshot(size_t iterations) {
 //Initialise the threads for each ATM
 //By calling the constructor of the ATM class, we can pass the ATM ID, the file path, and the Bank pointer
 //then we push the atm into the atms vector
-void Bank::initialize_atms(const std::vector<std::string>& file_paths) {
+void Bank::initialize_atms(const std::vector<std::string>& file_paths,const int vip_threads_number) {
+   
     for (size_t i = 0; i < file_paths.size(); ++i) {
         std::string atm_id = "ATM" + std::to_string(i + 1); // Generate ATM IDs
         atms.emplace_back(std::unique_ptr<ATM>(new ATM(atm_id, file_paths[i])));
@@ -236,6 +261,12 @@ void Bank::initialize_atms(const std::vector<std::string>& file_paths) {
 //this function joins the threads for each ATM
 void Bank::join_atm_threads() {
     for (pthread_t& thread : atm_threads) {
+        pthread_join(thread, nullptr);
+    }
+
+    End_Vip_Thread_pool = 1;
+
+    for(pthread_t& thread : vip_threads){
         pthread_join(thread, nullptr);
     }
 }
@@ -257,7 +288,7 @@ void* Bank::atm_thread_function(void* arg) {
 //Join the threads for each ATM
 //this function starts the threads for each ATM and
 //pushes the threads into the atm_threads vector
-void Bank::start_atm_threads() {
+void Bank::start_atm_threads(const int vip_threads_number) {
     for (const auto& atm : atms) {
         pthread_t thread_id;
 
@@ -268,6 +299,17 @@ void Bank::start_atm_threads() {
         }
     }
 
+    for(int i=0;i < vip_threads_number; i++){
+        pthread_t thread_id;
+
+        if (pthread_create(&thread_id, nullptr, Vip_Worker, nullptr) != 0) {
+            std::cerr << "Error creating thread for Vip tasks" << atm->get_id() << std::endl;
+        } else {
+            vip_threads.push_back(thread_id);
+        }
+    }
+
+    
     join_atm_threads();
 }
 
@@ -282,11 +324,14 @@ void Bank::start_atm_threads() {
 
 // Utility function to find an account by its ID
 Account* Bank::find_account(const std::string& account_id) {
+    //first should check if the account list is locked or not
+   Lock_Bank_Account_List_For_Reading_Access();
     for (const auto& acc : accounts) {
         if (acc->get_id() == account_id) {
             return acc.get(); // Return raw pointer to Account
         }
     }
+    unLock_Bank_Account_List_For_Reading_Access();
     return nullptr; // Return nullptr if account not found
 }
 
@@ -343,13 +388,14 @@ std::shared_ptr<Account>& Bank::get_bank_account() {
 //so we need to lock the mutex before adding/removing accounts
 
 void Bank::add_account_to_list(std::shared_ptr<Account> account) {
-    pthread_rwlock_wrlock(&accounts_rwlock);
+//    pthread_rwlock_wrlock(&accounts_rwlock);
     accounts.push_back(account);
-    pthread_rwlock_unlock(&accounts_rwlock); 
+  //  pthread_rwlock_unlock(&accounts_rwlock); 
 }
 
-void Bank::remove_account_from_list(Account* account) {
-    pthread_rwlock_wrlock(&accounts_rwlock); 
+bool Bank::remove_account_from_list(Account* account) {
+   // pthread_rwlock_wrlock(&accounts_rwlock); 
+    pthread_mutex_lock(&accounts_lock);
     auto it = std::remove_if(accounts.begin(), accounts.end(), 
         [account](const std::shared_ptr<Account>& acc) {
             return acc.get() == account; 
@@ -357,8 +403,12 @@ void Bank::remove_account_from_list(Account* account) {
 
     if (it != accounts.end()) {
         accounts.erase(it, accounts.end());
+    }else{
+        return false;
     }
-    pthread_rwlock_unlock(&accounts_rwlock); 
+    pthread_mutex_unlock(&accounts_lock);
+    return true;
+    //pthread_rwlock_unlock(&accounts_rwlock); 
 }
 /*
 ========================
@@ -415,9 +465,17 @@ void* Bank::print_accounts_periodically(void* arg) {
 
     while (true) {
         sleep(5);
-        pthread_mutex_lock(&(bank->print_mutex));
+        pthread_mutex_lock(&rollback_lock);
+        Lock_Bank_For_Printing();
         bank->print_all_accounts();
-        pthread_mutex_unlock(&(bank->print_mutex));
+        if(rollback_request)
+        {
+            restore_snapshot(max_rollback);
+            rollback_request = false;
+            max_rollback = 0;
+        }
+        pthread_mutex_unlock(&rollback_lock);
+        unLock_Bank_For_Printing();
     }
 
     return nullptr;
@@ -437,15 +495,16 @@ void* Bank::withdraw_from_accounts(void* arg) {
         sleep(3);
 
         pthread_mutex_lock(&(bank->print_mutex)); 
+        
+        //Generate a random percentage between 1% and 5%
+        double commission_percentage = (rand() % 5 + 1); 
+        double commission_fraction = commission_percentage / 100.0;
 
         for (const auto& account : bank->accounts) {
             double balance = account->view_balance();
 
             if (balance > 0) {
-                //Generate a random percentage between 1% and 5%
-                double commission_percentage = (rand() % 5 + 1); 
-                double commission_fraction = commission_percentage / 100.0;
-
+             
                 double commission = balance * commission_fraction;
 
                 account->withdraw(commission);
@@ -481,16 +540,88 @@ void* Bank::snapshot_thread(void* arg) {
     while (true) {
         sleep(5);  // Periodically take a snapshot (5 seconds interval, for example)
 
-        pthread_mutex_lock(&(bank->snapshot_mutex)); 
-
+        Lock_Bank_For_Printing();
         // Directly call the Bank's take_snapshot method
         bank->take_snapshot();  // Take snapshot without needing accounts explicitly
 
-        pthread_mutex_unlock(&(bank->snapshot_mutex)); 
+        unLock_Bank_For_Printing();
     }
 
     return nullptr;
 }
 
 
+void Bank::Vip_Worker(){
+
+    while(1){
+        Vip_Function command = get_Next_Vip_Command();
+        if(End_Vip_Threads == 1)
+            break;
+        execute_command_with_retries(command.get_function_name(),command.get_atm_id(),false);        
+    }
+}
+
+
+ void Bank::Lock_Bank_For_Printing(){
+
+    Lock_Bank_Account_List_For_Reading_Access();
+    for (const auto& acc : accounts) {
+        
+        acc->Lock_Account_For_Reading_Access();
+    }
+ }
+
+
+void Bank::unLock_Bank_For_Printing(){
+
+    unLock_Bank_Account_List_For_Reading_Access();
+    for (const auto& acc : accounts) {
+        
+        acc->unLock_Account_For_Reading_Access();
+    }
+}
+
+
+
+
+
+void Bank::Lock_Bank_Account_List_For_Reading_Access(){
+
+    pthread_mutex_lock(&accounts_reading_lock);
+    access_count ++:
+    if(access_count == 1)
+    {
+        pthread_mutex_lock(&accounts_lock);
+    }
+    pthread_mutex_unlock(&accounts_reading_lock);
+
+ }
+
+void Bank::unLock_Bank_Account_List_For_Reading_Access(){
+
+    pthread_mutex_lock(&accounts_reading_lock);
+    access_count --:
+    if(access_count == 0)
+    {
+        pthread_mutex_unlock(&accounts_lock);
+    }
+    pthread_mutex_unlock(&accounts_reading_lock);
+
+ }
+
+
+
+///////////////////////////////////
+//++++++thread_pool_commands++++++
+//////////////////////////////////
+
+ void Bank::Insert_Vip_Command(std::string command_name,int vip_number){
+
+    thread_pool.Insert_Vip_Command(command_name,vip_number);
+ }
+    
+Vip_Function Bank::get_Next_Vip_Command(){
+
+    return thread_pool.get_Next_Vip_Command();
+}
 
