@@ -23,7 +23,7 @@ bool process_command(const std::string& command, Bank& bank, const std::string& 
 
     if (stream.fail()) {
         std::cerr << "Invalid command format: " << command << std::endl;
-        return;
+        return false;
     }
 
     switch (action) {
@@ -41,11 +41,11 @@ bool process_command(const std::string& command, Bank& bank, const std::string& 
     return success;
 }
 
-void execute_command_with_retries(const std::string& command,const std::string& atm_id, bool is_persistent) {
+void execute_command_with_retries(Bank* bank, const std::string& command,const std::string& atm_id, bool is_persistent) {
     bool first_attempt = true;
 
     do {
-        bool success = process_command(command, *this, atm->get_id());
+        bool success = process_command(command, *bank, atm_id);
         if (success) {
             break;
         }
@@ -54,19 +54,21 @@ void execute_command_with_retries(const std::string& command,const std::string& 
             if (first_attempt) {
                 first_attempt = false; 
             } else {
-                log_command_failure(command, atm->get_id());
+                printf("error1") ;//remove after fixing log_command
+          //      log_command_failure(command, atm_id);
                 break; 
             }
             usleep(100000); 
         } else {
-            log_command_failure(command, atm->get_id());
+                printf("error2") ;//remove after fixing log_command
+       //     log_command_failure(command, atm_id);
             break;
         }
     } while (true);
 }
 
 
-void process_atm_commands(std::ifstream& file, const std::string& atm_id) {
+void process_atm_commands(Bank* bank, std::ifstream& file, const std::string& atm_id) {
     std::string command;
     while (std::getline(file, command)) {
         if (command.empty()) continue;
@@ -80,9 +82,9 @@ void process_atm_commands(std::ifstream& file, const std::string& atm_id) {
         {
             int vip_number = get_Vip_number(command);
             command = remove_Vip_keyword(command);
-            this.Insert_Vip_Command(command,vip_number, atm_id);
+            bank->Insert_Vip_Command(command,vip_number, atm_id);
         }else{
-        execute_command_with_retries(command, atm_id, is_persistent);
+        execute_command_with_retries(bank, command, atm_id, is_persistent);
         }
     }
 }
@@ -97,12 +99,7 @@ bool handle_rollback(std::istringstream& stream, Bank& bank, const std::string& 
         return false;
     }
 
-    pthread_mutex_lock(&(bank.rollback_lock));
-    if( iterations > bank.max_rollback )
-        bank.max_rollback = iterations;
-    bank.rollback_request = true;
-    pthread_mutex_unlock(&(bank.rollback_lock));
-
+    bank.rollback_add(iterations);
     // Call restore_snapshot to perform the rollback using the correct parameters
     return true;  // No need to pass accounts or main_account
 
@@ -207,7 +204,7 @@ int get_Vip_number(std::string command){
     return std::stoi(command.substr(command.find("VIP=") + 4));
 }
 
-std::String remove_Vip_keyword(std::string command){
+std::string remove_Vip_keyword(std::string command){
     return command.substr(0, command.find("VIP") - 1);
 }
 

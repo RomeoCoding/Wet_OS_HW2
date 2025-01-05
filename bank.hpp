@@ -10,6 +10,8 @@
 #include <deque>
 #include "atm.hpp"
 #include "vip_thread_pool.hpp"
+#include "thread_data.hpp"
+
 
 class Bank {
 private:
@@ -19,7 +21,7 @@ private:
     std::vector<pthread_t> atm_threads; 
     std::vector<pthread_t> vip_threads;
     //Mutexes for thread synchronization
-    mutable pthread_mutex_t print_mutex = PTHREAD_MUTEX_INITIALIZER;
+    //mutable pthread_mutex_t print_mutex = PTHREAD_MUTEX_INITIALIZER;
     pthread_mutex_t snapshot_mutex = PTHREAD_MUTEX_INITIALIZER;
    // pthread_rwlock_t accounts_rwlock = PTHREAD_RWLOCK_INITIALIZER;
     pthread_mutex_t accounts_lock = PTHREAD_MUTEX_INITIALIZER;  //locking the accout list to make or prevent change (add/delete Account)
@@ -33,6 +35,13 @@ private:
     std::deque<std::vector<std::shared_ptr<Account>>> account_list_snapshots;
     std::deque<std::shared_ptr<Account>> main_account_snapshot;  // Snapshots of the bank's account
     Vip_Thread_Pool thread_pool;
+
+    //Thread tracking threads and ending them
+    pthread_mutex_t threads_counter_lock = PTHREAD_MUTEX_INITIALIZER;
+    pthread_cond_t  threads_cond_var = PTHREAD_COND_INITIALIZER;
+    pthread_cond_t snapshot_cond_var = PTHREAD_COND_INITIALIZER;
+    int threads_counter = 0;
+
 
     int End_Vip_Thread_pool = 0;    //if end_vip_threads = 1 it ends all vip_threads this is done at the end
     static const int MAX_SNAPSHOTS = 120;
@@ -58,7 +67,7 @@ public:
     void start_atm_threads(const int vip_threads_number);
     void join_atm_threads();
     static void* atm_thread_function(void* arg);
-
+    static void* Vip_Worker(void* arg);
 
     //Methods
     bool create_account(const std::string& atm_id, const std::string& id, const std::string& password, double initial_balance);
@@ -67,6 +76,7 @@ public:
     bool balance_inquiry(const std::string& atm_id, const std::string& account_id, const std::string& password); 
     bool close_account(const std::string& atm_id, const std::string& account_id, const std::string& password); 
     bool transfer(const std::string& atm_id, const std::string& source_account_id, const std::string& password, const std::string& target_account_id, double amount);
+    void rollback_add(const int num);
     void rollback(int iterations); //havent implemented this yet
 
      //Snapshot Methods
@@ -88,7 +98,6 @@ public:
     static void* print_accounts_periodically(void* arg);  
     static void* withdraw_from_accounts(void* arg);
     static void* snapshot_thread(void* arg);    
-    void Vip_Worker();
 
 
     //locking functions
@@ -105,7 +114,7 @@ public:
     
     //thread pool functions
 
-    void Insert_Vip_Command(std::string command_name,int vip_number);
+    void Insert_Vip_Command(std::string command_name,int vip_number,std::string atm_id);
     Vip_Function get_Next_Vip_Command();
     
 

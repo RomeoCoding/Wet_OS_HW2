@@ -9,8 +9,10 @@ Account::Account(const std::string& id, const std::string& password, double init
   write_mutex = PTHREAD_MUTEX_INITIALIZER;
 }
 
+
 Account::~Account() {
-    pthread_rwlock_destroy(&balance_rwlock);  // Destroy the read-write lock
+    pthread_mutex_destroy(&read_mutex);
+    pthread_mutex_destroy(&read_mutex);
 }
 
 std::string Account::get_id() const {
@@ -21,14 +23,14 @@ std::string Account::get_password() const {
     return password;
 }
 
-double Account::view_balance() const {
+double Account::view_balance() {
    // pthread_rwlock_rdlock(&balance_rwlock);  // Acquire read lock
   
     Lock_Account_For_Reading_Access();
    
     double current_balance = balance;
-    
-    unLock_Account_For_Reading_Access
+    current_balance =current_balance +1 -1;
+    unLock_Account_For_Reading_Access();
     
     //  pthread_rwlock_unlock(&balance_rwlock);  // Release lock
     return current_balance;
@@ -58,7 +60,7 @@ bool Account::withdraw(double amount) {
     //note there is no need to lock reading becuase the next reader will stop at writing lock
 }
 
-void Account::print_account_details() const {
+void Account::print_account_details() {
    
     Lock_Account_For_Reading_Access();
    // pthread_rwlock_rdlock(&balance_rwlock);  // Acquire read lock
