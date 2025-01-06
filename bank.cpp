@@ -11,7 +11,7 @@
 #include <sstream>  
 #include <fstream>
 #include "procedure_handler.hpp"
-Bank bank;
+//Bank bank;
 ErrorHandler error_handler;
 extern pthread_mutex_t log_lock;
 //Constructor
@@ -226,9 +226,14 @@ void Bank::take_snapshot() {
     if (log_file.is_open()) {
         time_t now = time(0);
         std::string timestamp = ctime(&now);
-        timestamp.pop_back();  // Remove the newline character from timestamp
-    //    log_message("Snapshot taken at: ");
+        timestamp.pop_back();  // Remove the newline character from timestamp  
+        pthread_mutex_lock(&log_lock);
+        log_file << "snapshot taken at" << timestamp << std::endl;
+         pthread_mutex_unlock(&log_lock);
+    }else {
+        std::cerr << "Error: Log file is not open!" << std::endl;
     }
+    
 }
 
 
@@ -554,9 +559,14 @@ void* Bank::withdraw_from_accounts(void* arg) {
 
             if (balance > 0) {
              
+             // here something has to be done regarding locking 
+             //we whould lock the account from here to
                 double commission = balance * commission_fraction;
 
                 account->withdraw(commission);
+            //here 
+            //or add another input to withdraw to decide if it should withdraw the vlaue or precentage 
+            //for now as is it doesnt work well with threads 
 
                 // Deposit the commission into the bank's main account
                 bank->bank_account->deposit(commission);
@@ -627,6 +637,7 @@ void* Bank::Vip_Worker(void* arg){
         
         acc->Lock_Account_For_Reading_Access();
     }
+    bank_account->Lock_Account_For_Reading_Access();
  }
 
 
@@ -637,6 +648,7 @@ void Bank::unLock_Bank_For_Printing(){
         
         acc->unLock_Account_For_Reading_Access();
     }
+    bank_account->unLock_Account_For_Reading_Access();
 }
 
 
