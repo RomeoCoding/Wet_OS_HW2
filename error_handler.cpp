@@ -2,7 +2,9 @@
 #include <iostream>
 #include <fstream>
 
+
 std::ofstream log_file("log.txt", std::ios_base::app);
+pthread_mutex_t log_lock;
 
 void ErrorHandler::log_error(const std::string& atm_id, char action, const std::string& account_id, double amount) {
     std::string message;
@@ -39,7 +41,11 @@ void ErrorHandler::log_error(const std::string& atm_id, char action, const std::
         default:
             message = "Unknown error for ATM " + atm_id;
     }
+    //pthread_mutex_lock(&log_lock);
+    pthread_mutex_lock(&log_lock);
     log_file << message << std::endl;
+    pthread_mutex_unlock(&log_lock);
+    //pthread_mutex_unlock(&log_lock);
 }
 
 void ErrorHandler::log_success(const std::string& atm_id, char action, const std::string& account_id, double balance, double amount, const std::string& target_account) {
@@ -66,5 +72,16 @@ void ErrorHandler::log_success(const std::string& atm_id, char action, const std
         default:
             message = "Unknown success for ATM " + atm_id;
     }
+    //pthread_mutex_lock(&log_lock);
+    pthread_mutex_lock(&log_lock);
     log_file << message << std::endl;
+    pthread_mutex_unlock(&log_lock);
+   // pthread_mutex_unlock(&log_lock);
 }
+
+
+
+ ErrorHandler::~ErrorHandler(){
+
+ //   pthread_mutex_destroy(&log_lock);
+ }

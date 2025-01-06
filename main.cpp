@@ -3,6 +3,8 @@
 #include <vector>
 #include <string>
 
+pthread_mutex_t log_lock = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t cerr_lock = PTHREAD_MUTEX_INITIALIZER;
 int main(int argc, char* argv[]) {
     if (argc < 2) {
         std::cerr << "Usage: " << argv[0] << " <NumberOfVipThreads> <input_file1> <input_file2> ... <input_fileN>" << std::endl;

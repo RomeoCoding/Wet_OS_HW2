@@ -43,7 +43,7 @@ private:
     int threads_counter = 0;
 
 
-    int End_Vip_Thread_pool = 0;    //if end_vip_threads = 1 it ends all vip_threads this is done at the end
+    int End_All_Threads = 0;    //if end_vip_threads = 1 it ends all vip_threads this is done at the end
     static const int MAX_SNAPSHOTS = 120;
 
 
