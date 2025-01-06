@@ -9,7 +9,7 @@ private:
     std::string id;
     std::string password;
     double balance;
-    pthread_rwlock_t balance_rwlock; //Read-write lock for protecting the balance
+  //  pthread_rwlock_t balance_rwlock; //Read-write lock for protecting the balance
     pthread_mutex_t read_mutex;
     pthread_mutex_t write_mutex;
     int readers_count;
@@ -21,11 +21,11 @@ public:
     std::string get_id() const;
     std::string get_password() const;
 
-    double view_balance() const;
+    double view_balance();
     bool authenticate(const std::string& input_password) const;
     bool withdraw(double amount);
     void deposit(double amount);
-    void print_account_details() const;
+    void print_account_details();
 
     void Lock_Account_For_Reading_Access();
     void unLock_Account_For_Reading_Access();

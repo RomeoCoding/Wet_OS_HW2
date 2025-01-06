@@ -6,13 +6,13 @@ class Vip_Function{
 
     private:
     std::string function_name;
-    std::string atm_id;
     int vip_number;
+    std::string atm_id;
+   
     
     
     public:
     Vip_Function(const std::string& function_name, int vip_number,std::string atm_id);
-    ~Vip_Function();
 
     std::string get_function_name() const;
     std::string get_atm_id() const;
