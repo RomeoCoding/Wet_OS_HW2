@@ -1,5 +1,6 @@
 #include "bank.hpp"
 #include "error_handler.hpp"
+#include "logger.hpp"
 #include <stdexcept>
 #include <algorithm>
 #include <string>
@@ -12,8 +13,7 @@
 #include "procedure_handler.hpp"
 Bank bank;
 ErrorHandler error_handler;
-
-
+extern pthread_mutex_t log_lock;
 //Constructor
 Bank::Bank() {
     //Initialize the bank's own account
@@ -227,7 +227,7 @@ void Bank::take_snapshot() {
         time_t now = time(0);
         std::string timestamp = ctime(&now);
         timestamp.pop_back();  // Remove the newline character from timestamp
-        log_message("Snapshot taken at: ");
+    //    log_message("Snapshot taken at: ");
     }
 }
 

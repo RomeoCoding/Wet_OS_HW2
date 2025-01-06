@@ -3,8 +3,8 @@
 #include <iostream>
 
 extern std::ofstream log_file;  // For logging
-pthread_mutex_t log_lock;
-pthread_mutex_t cerr_lock
+extern pthread_mutex_t log_lock;
+extern pthread_mutex_t cerr_lock;
 //Utilities
 bool is_command_persistent(const std::string& command) {
     return command.find("PERSISTENT") != std::string::npos;
@@ -29,13 +29,13 @@ bool process_command(const std::string& command, Bank& bank, const std::string& 
     }
 
     switch (action) {
-        case 'O': success = handle_open_account(stream, bank, atm_id, bool Persistance); break;
-        case 'D': success = handle_deposit(stream, bank, atm_id, bool Persistance); break;
-        case 'W': success = handle_withdraw(stream, bank, atm_id, bool Persistance); break;
-        case 'B': success = handle_balance_inquiry(stream, bank, atm_id, bool Persistance); break;
-        case 'T': success = handle_transfer(stream, bank, atm_id, bool Persistance); break;
-        case 'Q': success = handle_close_account(stream, bank, atm_id, bool Persistance); break;
-        case 'R': success = handle_rollback(stream, bank, atm_id, bool Persistance); break;  
+        case 'O': success = handle_open_account(stream, bank, atm_id, Persistance); break;
+        case 'D': success = handle_deposit(stream, bank, atm_id, Persistance); break;
+        case 'W': success = handle_withdraw(stream, bank, atm_id, Persistance); break;
+        case 'B': success = handle_balance_inquiry(stream, bank, atm_id, Persistance); break;
+        case 'T': success = handle_transfer(stream, bank, atm_id, Persistance); break;
+        case 'Q': success = handle_close_account(stream, bank, atm_id, Persistance); break;
+        case 'R': success = handle_rollback(stream, bank, atm_id, Persistance); break;  
         default:
             pthread_mutex_lock(&cerr_lock);
             std::cerr << "Unknown action: " << action << " in command: " << command << std::endl;
@@ -109,6 +109,7 @@ bool handle_rollback(std::istringstream& stream, Bank& bank, const std::string& 
     stream >> iterations;
 
     if (stream.fail() && !Persistance) {
+        
         std::cerr << "Invalid parameters for rollback" << std::endl;
         return false;
     }
@@ -181,7 +182,7 @@ bool handle_transfer(std::istringstream& stream, Bank& bank, const std::string& 
     double amount;
     stream >> source_account_id >> password >> target_account_id >> amount;
 
-    if (stream.fail() !Persistance) {
+    if (stream.fail() && !Persistance) {
         std::cerr << "Invalid parameters for transfer" << std::endl;
         return false;
     }
@@ -193,7 +194,7 @@ bool handle_close_account(std::istringstream& stream, Bank& bank, const std::str
     std::string account_id, password;
     stream >> account_id >> password;
 
-    if (stream.fail() !Persistance) {
+    if (stream.fail() && !Persistance) {
         std::cerr << "Invalid parameters for account closure" << std::endl;
         return false;
     }

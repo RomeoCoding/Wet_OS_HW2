@@ -4,7 +4,7 @@
 
 
 std::ofstream log_file("log.txt", std::ios_base::app);
-pthread_mutex_t log_lock;
+extern pthread_mutex_t log_lock;
 
 void ErrorHandler::log_error(const std::string& atm_id, char action, const std::string& account_id, double amount) {
     std::string message;
