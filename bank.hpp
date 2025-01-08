@@ -37,6 +37,7 @@ private:
     //rollback lock
 
     pthread_mutex_t rollback_lock = PTHREAD_MUTEX_INITIALIZER;
+    std::string max_rollback_atm_id = "";
     int max_rollback = 0;
     bool rollback_request = false;
 
@@ -55,6 +56,7 @@ private:
 
 
     int End_All_Threads = 0;    //if end_vip_threads = 1 it ends all vip_threads this is done at the end
+   
     static const int MAX_SNAPSHOTS = 120;
 
 
@@ -81,19 +83,19 @@ public:
     static void* Vip_Worker(void* arg);
 
     //Methods
-    bool create_account(const std::string& atm_id, const std::string& id, const std::string& password, double initial_balance);
-    bool deposit(const std::string& atm_id, const std::string& id, const std::string& password, double amount); 
-    bool withdraw(const std::string& atm_id, const std::string& id, const std::string& password, double amount); 
-    bool balance_inquiry(const std::string& atm_id, const std::string& account_id, const std::string& password); 
-    bool close_account(const std::string& atm_id, const std::string& account_id, const std::string& password); 
-    bool transfer(const std::string& atm_id, const std::string& source_account_id, const std::string& password, const std::string& target_account_id, double amount);
-    void rollback_add(const int num);
+    bool create_account(const std::string& atm_id, const std::string& id, const std::string& password, double initial_balance ,bool Persistance);
+    bool deposit(const std::string& atm_id, const std::string& id, const std::string& password, double amount, bool Persistance); 
+    bool withdraw(const std::string& atm_id, const std::string& id, const std::string& password, double amount, bool Persistance); 
+    bool balance_inquiry(const std::string& atm_id, const std::string& account_id, const std::string& password, bool Persistance); 
+    bool close_account(const std::string& atm_id, const std::string& account_id, const std::string& password, bool Persistance); 
+    bool transfer(const std::string& atm_id, const std::string& source_account_id, const std::string& password, const std::string& target_account_id, double amount, bool Persistance);
+    void rollback_add(const int num,std::string atm_id);
     void rollback(int iterations); 
     
 
      //Snapshot Methods
     void take_snapshot();  //Take a snapshot of the current state
-    bool restore_snapshot(size_t iterations);  //Restore to a specific snapshot
+    bool restore_snapshot(size_t iterations,std::string atm_id);  //Restore to a specific snapshot
 
 
     //utility functions
@@ -113,7 +115,7 @@ public:
 
     bool find_atm(const std::string& atm_id);
     bool close_target_atm(const std::string& atm_id);
-    bool close_atm(const std::string& atm_id,const  std::string& target_atm_id);
+    bool close_atm(const std::string& atm_id,const  std::string& target_atm_id,bool Persistance);
     //locking functions
     void Lock_Bank_For_Printing();
     void unLock_Bank_For_Printing();

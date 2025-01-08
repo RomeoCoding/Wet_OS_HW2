@@ -23,10 +23,10 @@ public:
 
     double view_balance();
     bool authenticate(const std::string& input_password) const;
-    bool withdraw(double amount);
+    double withdraw(double amount ,int is_per = 0);
     void deposit(double amount);
     void print_account_details();
-
+    
     void Lock_Account_For_Reading_Access();
     void unLock_Account_For_Reading_Access();
 };

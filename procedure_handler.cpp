@@ -48,7 +48,7 @@ bool process_command(const std::string& command, Bank& bank, const std::string& 
 
 void execute_command_with_retries(Bank* bank, const std::string& command,const std::string& atm_id, bool is_persistent) {
     bool first_attempt = true;
-
+    std::cout << " command is" << command << std::endl; //debug should be removed
     do {
         bool success = process_command(command, *bank, atm_id, is_persistent);
         if (success) {
@@ -64,9 +64,11 @@ void execute_command_with_retries(Bank* bank, const std::string& command,const s
           //      log_command_failure(command, atm_id);
                 break; 
             }
+            std::cout << "presisitence failed\n"; //debug should be removed later
+            sleep(1); //sleep for 1 sec/
             usleep(100000); 
         } else {
-                printf("error2") ;//remove after fixing log_command
+              
        //     log_command_failure(command, atm_id);
             break;
         }
@@ -79,8 +81,6 @@ void process_atm_commands(Bank* bank, std::ifstream& file, const std::string& at
     usleep(100000);// sleep 100 milisec
     std::cout << "sleep for 100msec\n"; //debug should be removed
     while (std::getline(file, command)) {
-        std::cout << " command is" << command << std::endl; //debug should be removed
-        sleep(1);
         if (command.empty()) continue;
 
          if(is_command_Vip(command))
@@ -115,7 +115,7 @@ bool handle_rollback(std::istringstream& stream, Bank& bank, const std::string& 
         return false;
     }
 
-    bank.rollback_add(iterations);
+    bank.rollback_add(iterations , atm_id);
     // Call restore_snapshot to perform the rollback using the correct parameters
     return true;  // No need to pass accounts or main_account
 
@@ -137,7 +137,7 @@ bool handle_open_account(std::istringstream& stream, Bank& bank, const std::stri
         return false;
     }
 
-    return (bank.create_account(atm_id, account_id, password, initial_balance));
+    return (bank.create_account(atm_id, account_id, password, initial_balance, Persistance));
 }
 
 bool handle_deposit(std::istringstream& stream, Bank& bank, const std::string& atm_id, bool Persistance) {
@@ -150,7 +150,7 @@ bool handle_deposit(std::istringstream& stream, Bank& bank, const std::string& a
         return false;
     }
 
-    return (bank.deposit(atm_id, account_id, password, amount));
+    return (bank.deposit(atm_id, account_id, password, amount,Persistance));
 }
 
 bool handle_withdraw(std::istringstream& stream, Bank& bank, const std::string& atm_id, bool Persistance) {
@@ -163,7 +163,7 @@ bool handle_withdraw(std::istringstream& stream, Bank& bank, const std::string& 
         return false;
     }
 
-    return(bank.withdraw(atm_id, account_id, password, amount));
+    return(bank.withdraw(atm_id, account_id, password, amount,Persistance));
 }
 
 bool handle_balance_inquiry(std::istringstream& stream, Bank& bank, const std::string& atm_id, bool Persistance) {
@@ -175,7 +175,7 @@ bool handle_balance_inquiry(std::istringstream& stream, Bank& bank, const std::s
         return false;
     }
 
-    return(bank.balance_inquiry(atm_id, account_id, password));
+    return(bank.balance_inquiry(atm_id, account_id, password,Persistance));
 }
 
 bool handle_transfer(std::istringstream& stream, Bank& bank, const std::string& atm_id, bool Persistance) {
@@ -188,7 +188,7 @@ bool handle_transfer(std::istringstream& stream, Bank& bank, const std::string& 
         return false;
     }
 
-    return(bank.transfer(atm_id, source_account_id, password, target_account_id, amount));
+    return(bank.transfer(atm_id, source_account_id, password, target_account_id, amount, Persistance));
 }
 
 bool handle_close_account(std::istringstream& stream, Bank& bank, const std::string& atm_id, bool Persistance) {
@@ -200,7 +200,7 @@ bool handle_close_account(std::istringstream& stream, Bank& bank, const std::str
         return false;
     }
 
-    return(bank.close_account(atm_id, account_id, password));
+    return(bank.close_account(atm_id, account_id, password,Persistance));
 }
 
 bool handle_close_atm(std::istringstream& stream, Bank& bank, const std::string& atm_id, bool Persistance) {
@@ -211,7 +211,7 @@ bool handle_close_atm(std::istringstream& stream, Bank& bank, const std::string&
     }
     stream >> target_atm_id;
 
-    return(bank.close_atm(atm_id, target_atm_id));
+    return(bank.close_atm(atm_id, target_atm_id,Persistance));
 }
 
 

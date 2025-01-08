@@ -40,6 +40,11 @@ void ErrorHandler::log_error(const std::string& atm_id, char action, const std::
                 message = "Error " + atm_id + ": Your transaction failed – ATM_ID " + account_id + " does not exist";
             }
             break;
+        
+         case 'R':
+            message = atm_id + ": Rollback to " + std::to_string(static_cast<int>(amount)) + " Failed";
+            break;
+
         case 'I': //Invalid account id
             message = "Error " + atm_id + ": Your transaction failed – account id " + account_id + " does not exist";
             break;

@@ -21,6 +21,7 @@ Vip_Function Vip_Thread_Pool::get_Next_Vip_Command(){
     }
     if(End_Vip_Threads == 1){
         Vip_Function null_func("-1",-1,"-1");
+        pthread_mutex_unlock(&vip_command_list_lock);
         return null_func;
     }
     
