@@ -352,17 +352,21 @@ void Bank::join_atm_threads() {
 }
 
 void* Bank::atm_thread_function(void* arg) {
+    std::cout << "now entered Atm_Thread_function" <<std::endl;
     Thread_Data* thread_data = static_cast<Thread_Data*>(arg);
     ATM* atm=thread_data->get_atm();
     Bank* bank=thread_data->get_Bank();
-
+     std::cout << "built the bases of atm thread" <<std::endl;
     std::ifstream file(atm->get_input_file());
     if (!file.is_open()) {
         //log_error(atm->get_input_file(), atm->get_id());
+         std::cout << "Failed to open the file" <<std::endl;
+         std::cout << atm->get_input_file() <<std::endl;
+
         return nullptr;
     }
 
-
+    std::cerr << "ATM tasks" << std::endl;
     process_atm_commands(bank, file, atm->get_id());
     file.close();
     pthread_cond_wait(&(bank->snapshot_cond_var),&(bank->threads_counter_lock));
@@ -381,8 +385,10 @@ void* Bank::atm_thread_function(void* arg) {
 void Bank::start_atm_threads(const int vip_threads_number) {
     for (const auto& atm : atms) {
         pthread_t thread_id;
-        Thread_Data thread_data(atm.get(),this);
-        if (pthread_create(&thread_id, nullptr, atm_thread_function, &thread_data) != 0) {
+        auto thread_data=std::make_shared<Thread_Data>(atm.get(),this);
+        std::cout << "now we should vreat atm thread"<<std::endl;
+        std::cout << atm->get_input_file() <<std::endl;
+        if (pthread_create(&thread_id, nullptr, atm_thread_function, (void*)thread_data.get()) != 0) {
             std::cerr << "Error creating thread for ATM " << atm->get_id() << std::endl;
         } else {
             atm_threads.push_back(thread_id);
@@ -395,15 +401,15 @@ void Bank::start_atm_threads(const int vip_threads_number) {
     for(int i=0;i < vip_threads_number; i++){
         pthread_t thread_id;
 
-        if (pthread_create(&thread_id, nullptr, Vip_Worker, this) != 0) {
+        if (pthread_create(&thread_id, nullptr, Vip_Worker, (void*)this) != 0) {
             std::cerr << "Error creating thread for Vip tasks" << std::endl;
         } else {
-             std::cout << "VIP THREAD CREATED" << std::endl;
+            std::cout << "VIP THREAD CREATED" << std::endl;
             vip_threads.push_back(thread_id);
         }
     }
 
-    
+    std::cout << "entering join" << std::endl;
     join_atm_threads();
 }
 
@@ -669,6 +675,7 @@ void* Bank::snapshot_thread(void* arg) {
 void* Bank::Vip_Worker(void* arg){
     Bank* bank = static_cast<Bank*>(arg);
     while(1){
+          std::cerr << "Vip tasks" << std::endl;
         Vip_Function command = bank->get_Next_Vip_Command();
         if(bank->End_All_Threads == 1)
             break;

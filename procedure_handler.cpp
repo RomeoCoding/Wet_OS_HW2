@@ -88,6 +88,7 @@ void process_atm_commands(Bank* bank, std::ifstream& file, const std::string& at
             int vip_number = get_Vip_number(command);
             command = remove_Vip_keyword(command);
             bank->Insert_Vip_Command(command,vip_number, atm_id);
+            std::cout << " added VIp\n";   //debug should be removed
         }else{
 
             bool is_persistent = is_command_persistent(command);

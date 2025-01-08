@@ -22,7 +22,6 @@ class Vip_Thread_Pool{
     int End_Vip_Threads = 0;
 
     public:
-    Vip_Thread_Pool();
     ~Vip_Thread_Pool();
     Vip_Function get_Next_Vip_Command();
     void Insert_Vip_Command(std::string command_name,int vip_number, std::string atm_id);

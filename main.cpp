@@ -21,7 +21,6 @@ int main(int argc, char* argv[]) {
     Bank bank;
     std::vector<std::string> input_files;
     int vip_threads_number = atoi(argv[1]);
-
     //Validate file paths through a "wrapper"
     for (int i = 2; i < argc; ++i) {
         std::ifstream file(argv[i]);
