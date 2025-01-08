@@ -62,7 +62,7 @@ bool Bank::deposit(const std::string& atm_id, const std::string& id, const std::
    
     Account* acc = find_account(id); 
     if (acc == nullptr) {
-        error_handler.log_error(atm_id, 'D', id); 
+        error_handler.log_error(atm_id, 'I', id); 
         return false;
     }
 
@@ -86,7 +86,7 @@ bool Bank::withdraw(const std::string& atm_id, const std::string& id, const std:
 
     Account* acc = find_account(id); 
     if (acc == nullptr) {
-        error_handler.log_error(atm_id, 'W', id); 
+        error_handler.log_error(atm_id, 'I', id); 
         return false;
     }
 
@@ -117,7 +117,7 @@ bool Bank::balance_inquiry(const std::string& atm_id, const std::string& account
 
     Account* acc = find_account(account_id); 
     if (acc == nullptr) {
-        error_handler.log_error(atm_id, 'B', account_id); 
+        error_handler.log_error(atm_id, 'I', id); 
         return false;
     }
    
@@ -127,7 +127,7 @@ bool Bank::balance_inquiry(const std::string& atm_id, const std::string& account
         error_handler.log_success(atm_id, 'B', account_id, balance, 0.0); 
         return true;
     } else {
-        error_handler.log_error(atm_id, 'B', account_id);  
+        error_handler.log_error(atm_id, 'D', account_id);  
         return false;
     }
 }
@@ -141,7 +141,7 @@ bool Bank::close_account(const std::string& atm_id, const std::string& account_i
     //addtional lock for deleting should be added not sure how to do it
     Account* account = find_account(account_id); 
     if (account == nullptr) {
-        error_handler.log_error(atm_id, 'Q', account_id);
+        error_handler.log_error(atm_id, 'I', id); 
         return false;
     }
 
@@ -166,17 +166,15 @@ bool Bank::close_account(const std::string& atm_id, const std::string& account_i
 */
 
 bool Bank::transfer(const std::string& atm_id, const std::string& source_account_id, const std::string& password, const std::string& target_account_id, double amount) {
-    Account* source_account = find_account(source_account_id); // Use find_account here
-    Account* target_account = find_account(target_account_id); // Use find_account here
+    Account* source_account = find_account(source_account_id); 
+    Account* target_account = find_account(target_account_id);
 
     if (source_account == nullptr || target_account == nullptr) {
-        // If either account does not exist, log an error
-        error_handler.log_error(atm_id, 'T', source_account_id); 
+        error_handler.log_error(atm_id, 'I', id); 
         return false;
     }
 
     if (source_account->get_password() != password) {
-        // If the password is incorrect, log the error
         error_handler.log_error(atm_id, 'T', source_account_id);
         return false;
     }
@@ -207,6 +205,16 @@ void Bank::rollback_add(const int num){
 void Bank::rollback(int iterations){
     restore_snapshot(iterations);
 }
+
+/*
+=========================
+======== Close ATM ======
+=========================
+*/
+bool Bank::close_atm(const std::string& atm_id) { //the letter is C
+    return 1;
+}
+
 /*
 =========================
 =====Snapshot Methods====

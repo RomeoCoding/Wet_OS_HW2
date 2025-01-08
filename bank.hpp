@@ -15,28 +15,39 @@
 
 class Bank {
 private:
+
     std::vector<std::shared_ptr<Account>> accounts;
     std::shared_ptr<Account> bank_account; // he bank's own account
     std::vector<std::unique_ptr<ATM>> atms; 
     std::vector<pthread_t> atm_threads; 
     std::vector<pthread_t> vip_threads;
+
     //Mutexes for thread synchronization
     //mutable pthread_mutex_t print_mutex = PTHREAD_MUTEX_INITIALIZER;
+
     pthread_mutex_t snapshot_mutex = PTHREAD_MUTEX_INITIALIZER;
+
    // pthread_rwlock_t accounts_rwlock = PTHREAD_RWLOCK_INITIALIZER;
+
     pthread_mutex_t accounts_lock = PTHREAD_MUTEX_INITIALIZER;  //locking the accout list to make or prevent change (add/delete Account)
     pthread_mutex_t accounts_reading_lock = PTHREAD_MUTEX_INITIALIZER; //this is to tell that bank when to lock accounts
+
     int access_count = 0;
+
     //rollback lock
+
     pthread_mutex_t rollback_lock = PTHREAD_MUTEX_INITIALIZER;
     int max_rollback = 0;
     bool rollback_request = false;
+
     //Managing snapshots for rollback
+
     std::deque<std::vector<std::shared_ptr<Account>>> account_list_snapshots;
     std::deque<std::shared_ptr<Account>> main_account_snapshot;  // Snapshots of the bank's account
     Vip_Thread_Pool thread_pool;
 
-    //Thread tracking threads and ending them
+    //Thread-tracking threads and ending them
+
     pthread_mutex_t threads_counter_lock = PTHREAD_MUTEX_INITIALIZER;
     pthread_cond_t  threads_cond_var = PTHREAD_COND_INITIALIZER;
     pthread_cond_t snapshot_cond_var = PTHREAD_COND_INITIALIZER;
@@ -77,7 +88,8 @@ public:
     bool close_account(const std::string& atm_id, const std::string& account_id, const std::string& password); 
     bool transfer(const std::string& atm_id, const std::string& source_account_id, const std::string& password, const std::string& target_account_id, double amount);
     void rollback_add(const int num);
-    void rollback(int iterations); //havent implemented this yet
+    void rollback(int iterations); 
+    bool close_atm(const std::string& atm_id);
 
      //Snapshot Methods
     void take_snapshot();  //Take a snapshot of the current state

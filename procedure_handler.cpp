@@ -24,7 +24,7 @@ bool process_command(const std::string& command, Bank& bank, const std::string& 
 
     if (stream.fail()) {
         pthread_mutex_lock(&cerr_lock);
-        std::cerr << "Invalid command format: " << command << std::endl;
+        std::cerr << "Invalid command format: " << command << std::endl; //can assume command is valid
         return false;
     }
 
@@ -36,9 +36,10 @@ bool process_command(const std::string& command, Bank& bank, const std::string& 
         case 'T': success = handle_transfer(stream, bank, atm_id, Persistance); break;
         case 'Q': success = handle_close_account(stream, bank, atm_id, Persistance); break;
         case 'R': success = handle_rollback(stream, bank, atm_id, Persistance); break;  
+        case 'C': success = handle_close_atm(stream, bank, atm_id, Persistance); break;
         default:
             pthread_mutex_lock(&cerr_lock);
-            std::cerr << "Unknown action: " << action << " in command: " << command << std::endl;
+            std::cerr << "Unknown action: " << action << " in command: " << command << std::endl; //remove after fixing log_command
             pthread_mutex_unlock(&cerr_lock);
             success = false;
     }
@@ -110,7 +111,7 @@ bool handle_rollback(std::istringstream& stream, Bank& bank, const std::string& 
 
     if (stream.fail() && !Persistance) {
         
-        std::cerr << "Invalid parameters for rollback" << std::endl;
+        std::cerr << "Invalid parameters for rollback" << std::endl;//remove after fixing log_command
         return false;
     }
 
@@ -202,7 +203,14 @@ bool handle_close_account(std::istringstream& stream, Bank& bank, const std::str
     return(bank.close_account(atm_id, account_id, password));
 }
 
+bool handle_close_atm(std::istringstream& stream, Bank& bank, const std::string& atm_id, bool Persistance) {
+    if (stream.fail() && !Persistance) {
+        std::cerr << "Invalid parameters for atm closure" << std::endl;
+        return false;
+    }
 
+    return(bank.close_atm(atm_id));
+}
 
 
 //////////////////////////////////////////
@@ -222,4 +230,3 @@ int get_Vip_number(std::string command){
 std::string remove_Vip_keyword(std::string command){
     return command.substr(0, command.find("VIP") - 1);
 }
-
