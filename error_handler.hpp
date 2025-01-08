@@ -17,6 +17,7 @@ public:
     static void log_success(const std::string& atm_id, char action, const std::string& account_id, double balance, double amount = 0.0, const std::string& target_account = "");
     static void log_atm_success(const std::string& source_atm_id, const std::string& target_atm_id);
 
+    
     ~ErrorHandler();
 };
 

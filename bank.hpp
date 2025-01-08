@@ -89,7 +89,7 @@ public:
     bool transfer(const std::string& atm_id, const std::string& source_account_id, const std::string& password, const std::string& target_account_id, double amount);
     void rollback_add(const int num);
     void rollback(int iterations); 
-    bool close_atm(const std::string& atm_id);
+    
 
      //Snapshot Methods
     void take_snapshot();  //Take a snapshot of the current state
@@ -111,7 +111,9 @@ public:
     static void* withdraw_from_accounts(void* arg);
     static void* snapshot_thread(void* arg);    
 
-
+    bool find_atm(const std::string& atm_id);
+    bool close_target_atm(const std::string& atm_id);
+    bool close_atm(const std::string& atm_id,const  std::string& target_atm_id);
     //locking functions
     void Lock_Bank_For_Printing();
     void unLock_Bank_For_Printing();

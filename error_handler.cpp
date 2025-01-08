@@ -34,10 +34,10 @@ void ErrorHandler::log_error(const std::string& atm_id, char action, const std::
             }
             break;
         case 'C':
-            if(atm_already_closed){
-                message = "Error " + atm_id + ": Your close operation failed - ATM ID " + target_atm_id + " is already in a closed state";
+            if(amount == 0){
+                message = "Error " + atm_id + ": Your close operation failed - ATM ID " + account_id + " is already in a closed state";
             }else{
-                message = "Error " + atm_id + ": Your transaction failed – ATM_ID " + target_atm_id + " does not exist";
+                message = "Error " + atm_id + ": Your transaction failed – ATM_ID " + account_id + " does not exist";
             }
             break;
         case 'I': //Invalid account id
@@ -83,7 +83,7 @@ void ErrorHandler::log_success(const std::string& atm_id, char action, const std
     pthread_mutex_unlock(&log_lock);
 }
 
-void error_handler::log_atm_error(const std::string& source_atm_id, const std::string& target_atm_id, bool atm_already_closed) {
+void ErrorHandler::log_atm_error(const std::string& source_atm_id, const std::string& target_atm_id, bool atm_already_closed) {
     std::string message;
     if(atm_already_closed){
         message = "Error " + source_atm_id + ": Your close operation failed - ATM ID " + target_atm_id + " is already in a closed state";
@@ -95,7 +95,7 @@ void error_handler::log_atm_error(const std::string& source_atm_id, const std::s
     log_file << message << std::endl;
     pthread_mutex_unlock(&log_lock);
 }
-void error_handler::log_atm_success(const std::string& source_atm_id, const std::string& target_atm_id) {
+void ErrorHandler::log_atm_success(const std::string& source_atm_id, const std::string& target_atm_id) {
     std::string message = "Bank: " +source_atm_id + " closed " + target_atm_id + " successfully";
     pthread_mutex_lock(&log_lock);
     log_file << message << std::endl;

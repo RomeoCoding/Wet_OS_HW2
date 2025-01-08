@@ -117,7 +117,7 @@ bool Bank::balance_inquiry(const std::string& atm_id, const std::string& account
 
     Account* acc = find_account(account_id); 
     if (acc == nullptr) {
-        error_handler.log_error(atm_id, 'I', id); 
+        error_handler.log_error(atm_id, 'I', account_id); 
         return false;
     }
    
@@ -141,7 +141,7 @@ bool Bank::close_account(const std::string& atm_id, const std::string& account_i
     //addtional lock for deleting should be added not sure how to do it
     Account* account = find_account(account_id); 
     if (account == nullptr) {
-        error_handler.log_error(atm_id, 'I', id); 
+        error_handler.log_error(atm_id, 'I', account_id); 
         return false;
     }
 
@@ -169,15 +169,22 @@ bool Bank::transfer(const std::string& atm_id, const std::string& source_account
     Account* source_account = find_account(source_account_id); 
     Account* target_account = find_account(target_account_id);
 
-    if (source_account == nullptr || target_account == nullptr) {
-        error_handler.log_error(atm_id, 'I', id); 
+    if (source_account == nullptr) {
+        error_handler.log_error(atm_id, 'I', source_account_id); 
         return false;
     }
 
+    if(target_account == nullptr)
+    {
+        error_handler.log_error(atm_id, 'I', target_account_id); 
+        return false;
+    }
     if (source_account->get_password() != password) {
         error_handler.log_error(atm_id, 'T', source_account_id);
         return false;
     }
+
+
     
     //here was error where you could view the balance but the balance can change until you withdraw
     if (!source_account->withdraw(amount)) {
@@ -211,8 +218,19 @@ void Bank::rollback(int iterations){
 ======== Close ATM ======
 =========================
 */
-bool Bank::close_atm(const std::string& atm_id) { //the letter is C
-    return 1;
+bool Bank::close_atm(const std::string& atm_id,const  std::string& target_atm_id) { //the letter is C
+    if(find_atm(target_atm_id))
+    {
+        if(close_target_atm(target_atm_id))
+        {
+            error_handler.log_atm_success(atm_id,target_atm_id);
+            return true;
+        }
+        error_handler.log_atm_error(atm_id,target_atm_id,true);
+        return false;
+    }
+      error_handler.log_atm_error(atm_id,target_atm_id,false);
+    return false;
 }
 
 /*
@@ -638,6 +656,25 @@ void* Bank::Vip_Worker(void* arg){
 }
 
 
+bool Bank::find_atm(const std::string& atm_id)
+{
+    for (const auto& atm : atms) {
+    // Access the ATM object using atm->method() or atm->member
+        if(atm->get_id() == atm_id)
+            return true;
+    }
+    return false;   
+}
+
+bool Bank::close_target_atm(const std::string& atm_id)
+{
+    for (const auto& atm : atms) {
+        // Access the ATM object using atm->method() or atm->member
+       if(atm->get_id() == atm_id)
+           return atm->End_ATM();
+        }
+        return false;   
+}
  void Bank::Lock_Bank_For_Printing(){
 
     Lock_Bank_Account_List_For_Reading_Access();

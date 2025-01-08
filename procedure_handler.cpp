@@ -204,12 +204,14 @@ bool handle_close_account(std::istringstream& stream, Bank& bank, const std::str
 }
 
 bool handle_close_atm(std::istringstream& stream, Bank& bank, const std::string& atm_id, bool Persistance) {
+    std::string target_atm_id;
     if (stream.fail() && !Persistance) {
         std::cerr << "Invalid parameters for atm closure" << std::endl;
         return false;
     }
+    stream >> target_atm_id;
 
-    return(bank.close_atm(atm_id));
+    return(bank.close_atm(atm_id, target_atm_id));
 }
 
 
