@@ -96,9 +96,9 @@ void ErrorHandler::log_open_account_success(const std::string& atm_id, const std
 void ErrorHandler::log_atm_error(const std::string& source_atm_id, const std::string& target_atm_id, bool atm_already_closed) {
     std::string message;
     if(atm_already_closed){
-        message = "Error " + source_atm_id + ": Your close operation failed - ATM ID " + target_atm_id[3] + " is already in a closed state";
+        message = "Error " + source_atm_id + ": Your close operation failed - ATM ID " + target_atm_id[4] + " is already in a closed state";
     }else{
-        message = "Error " + source_atm_id + ": Your transaction failed – ATM_ID " + target_atm_id[3] + " does not exist";
+        message = "Error " + source_atm_id + ": Your transaction failed – ATM_ID " + target_atm_id[4] + " does not exist";
     }
 
     pthread_mutex_lock(&log_lock);

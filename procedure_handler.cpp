@@ -180,7 +180,7 @@ bool handle_close_atm(std::istringstream& stream, Bank& bank, const std::string&
         return false;
     }
     stream >> target_atm_id;
-    target_atm_id = "ATM " + target_atm_id;
+    target_atm_id = "ATM" + target_atm_id;
     return(bank.close_atm(atm_id, target_atm_id,Persistance));
 }
 
