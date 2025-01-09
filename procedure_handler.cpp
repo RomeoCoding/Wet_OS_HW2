@@ -24,7 +24,6 @@ bool process_command(const std::string& command, Bank& bank, const std::string& 
 
     if (stream.fail()) {
         pthread_mutex_lock(&cerr_lock);
-        std::cerr << "Invalid command format: " << command << std::endl; //can assume command is valid
         return false;
     }
 
@@ -38,9 +37,6 @@ bool process_command(const std::string& command, Bank& bank, const std::string& 
         case 'R': success = handle_rollback(stream, bank, atm_id, Persistance); break;  
         case 'C': success = handle_close_atm(stream, bank, atm_id, Persistance); break;
         default:
-            pthread_mutex_lock(&cerr_lock);
-            std::cerr << "Unknown action: " << action << " in command: " << command << std::endl; //remove after fixing log_command
-            pthread_mutex_unlock(&cerr_lock);
             success = false;
     }
     return success;
