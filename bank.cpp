@@ -362,7 +362,6 @@ void Bank::start_atm_threads(const int vip_threads_number) {
     for (const auto& atm : atms) {
         pthread_t thread_id;
         auto thread_data=std::make_shared<Thread_Data>(atm.get(),this);
-        std::cout << atm->get_input_file() <<std::endl;
         if (pthread_create(&thread_id, nullptr, atm_thread_function,static_cast<void*>(new std::shared_ptr<Thread_Data>(thread_data))) != 0) {
         error_handler.handle_system_error("pthread_create");
         } else {
