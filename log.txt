@@ -1,0 +1,10 @@
+ATM2: New account id is 1232 with password 1222 and initial balance 1333.000000
+Error ATM2: Your transaction failed – account with the same id exists
+Error ATM2: Your transaction failed – account with the same id exists
+Error ATM2: Your transaction failed – account with the same id exists
+Error ATM2: Your transaction failed – account with the same id exists
+Error ATM2: Your transaction failed – account with the same id exists
+Error ATM2: Your transaction failed – account with the same id exists
+Error ATM2: Your transaction failed – account with the same id exists
+Bank: commissions of 4% were charged, bank gained 53.32 from account 1232
+Bank: commissions of 2% were charged, bank gained 25.5936 from account 1232

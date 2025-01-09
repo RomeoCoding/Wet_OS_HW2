@@ -1,9 +1,7 @@
 #include "vip_thread_pool.hpp"
 
 
-Vip_Thread_Pool::Vip_Thread_Pool(){
 
-}
 
 Vip_Thread_Pool::~Vip_Thread_Pool(){
 
@@ -16,11 +14,12 @@ Vip_Function Vip_Thread_Pool::get_Next_Vip_Command(){
 
     pthread_mutex_lock(&vip_command_list_lock);
     while( vip_command_list.empty() && End_Vip_Threads == 0 ){
-
+        
         pthread_cond_wait(&vip_empty_or_end, &vip_command_list_lock);
     }
     if(End_Vip_Threads == 1){
         Vip_Function null_func("-1",-1,"-1");
+        pthread_mutex_unlock(&vip_command_list_lock);
         return null_func;
     }
     

@@ -15,28 +15,40 @@
 
 class Bank {
 private:
+
     std::vector<std::shared_ptr<Account>> accounts;
     std::shared_ptr<Account> bank_account; // he bank's own account
     std::vector<std::unique_ptr<ATM>> atms; 
     std::vector<pthread_t> atm_threads; 
     std::vector<pthread_t> vip_threads;
+
     //Mutexes for thread synchronization
     //mutable pthread_mutex_t print_mutex = PTHREAD_MUTEX_INITIALIZER;
+
     pthread_mutex_t snapshot_mutex = PTHREAD_MUTEX_INITIALIZER;
+
    // pthread_rwlock_t accounts_rwlock = PTHREAD_RWLOCK_INITIALIZER;
+
     pthread_mutex_t accounts_lock = PTHREAD_MUTEX_INITIALIZER;  //locking the accout list to make or prevent change (add/delete Account)
     pthread_mutex_t accounts_reading_lock = PTHREAD_MUTEX_INITIALIZER; //this is to tell that bank when to lock accounts
+
     int access_count = 0;
+
     //rollback lock
+
     pthread_mutex_t rollback_lock = PTHREAD_MUTEX_INITIALIZER;
+    std::string max_rollback_atm_id = "";
     int max_rollback = 0;
     bool rollback_request = false;
+
     //Managing snapshots for rollback
+
     std::deque<std::vector<std::shared_ptr<Account>>> account_list_snapshots;
     std::deque<std::shared_ptr<Account>> main_account_snapshot;  // Snapshots of the bank's account
     Vip_Thread_Pool thread_pool;
 
-    //Thread tracking threads and ending them
+    //Thread-tracking threads and ending them
+
     pthread_mutex_t threads_counter_lock = PTHREAD_MUTEX_INITIALIZER;
     pthread_cond_t  threads_cond_var = PTHREAD_COND_INITIALIZER;
     pthread_cond_t snapshot_cond_var = PTHREAD_COND_INITIALIZER;
@@ -44,6 +56,7 @@ private:
 
 
     int End_All_Threads = 0;    //if end_vip_threads = 1 it ends all vip_threads this is done at the end
+   
     static const int MAX_SNAPSHOTS = 120;
 
 
@@ -70,18 +83,19 @@ public:
     static void* Vip_Worker(void* arg);
 
     //Methods
-    bool create_account(const std::string& atm_id, const std::string& id, const std::string& password, double initial_balance);
-    bool deposit(const std::string& atm_id, const std::string& id, const std::string& password, double amount); 
-    bool withdraw(const std::string& atm_id, const std::string& id, const std::string& password, double amount); 
-    bool balance_inquiry(const std::string& atm_id, const std::string& account_id, const std::string& password); 
-    bool close_account(const std::string& atm_id, const std::string& account_id, const std::string& password); 
-    bool transfer(const std::string& atm_id, const std::string& source_account_id, const std::string& password, const std::string& target_account_id, double amount);
-    void rollback_add(const int num);
-    void rollback(int iterations); //havent implemented this yet
+    bool create_account(const std::string& atm_id, const std::string& id, const std::string& password, double initial_balance ,bool Persistance);
+    bool deposit(const std::string& atm_id, const std::string& id, const std::string& password, double amount, bool Persistance); 
+    bool withdraw(const std::string& atm_id, const std::string& id, const std::string& password, double amount, bool Persistance); 
+    bool balance_inquiry(const std::string& atm_id, const std::string& account_id, const std::string& password, bool Persistance); 
+    bool close_account(const std::string& atm_id, const std::string& account_id, const std::string& password, bool Persistance); 
+    bool transfer(const std::string& atm_id, const std::string& source_account_id, const std::string& password, const std::string& target_account_id, double amount, bool Persistance);
+    void rollback_add(const int num,std::string atm_id);
+    void rollback(int iterations); 
+    
 
      //Snapshot Methods
     void take_snapshot();  //Take a snapshot of the current state
-    bool restore_snapshot(size_t iterations);  //Restore to a specific snapshot
+    bool restore_snapshot(size_t iterations,std::string atm_id);  //Restore to a specific snapshot
 
 
     //utility functions
@@ -99,7 +113,9 @@ public:
     static void* withdraw_from_accounts(void* arg);
     static void* snapshot_thread(void* arg);    
 
-
+    bool find_atm(const std::string& atm_id);
+    bool close_target_atm(const std::string& atm_id);
+    bool close_atm(const std::string& atm_id,const  std::string& target_atm_id,bool Persistance);
     //locking functions
     void Lock_Bank_For_Printing();
     void unLock_Bank_For_Printing();

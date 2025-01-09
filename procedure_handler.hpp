@@ -22,6 +22,7 @@ bool handle_balance_inquiry(std::istringstream& stream, Bank& bank, const std::s
 bool handle_transfer(std::istringstream& stream, Bank& bank, const std::string& atm_id, bool Persistance);
 bool handle_close_account(std::istringstream& stream, Bank& bank, const std::string& atm_id, bool Persistance);
 bool handle_rollback(std::istringstream& stream, Bank& bank, const std::string& atm_id, bool Persistance);
+bool handle_close_atm(std::istringstream& stream, Bank& bank, const std::string& atm_id, bool Persistance);
 
 //Utilities
 bool is_command_persistent(const std::string& command);

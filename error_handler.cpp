@@ -1,87 +1,122 @@
 #include "error_handler.hpp"
 #include <iostream>
 #include <fstream>
-
-
+#include <sstream>
+#include <string>
+#define EXIT_FAIL 1
 std::ofstream log_file("log.txt", std::ios_base::app);
-pthread_mutex_t log_lock;
+extern pthread_mutex_t log_lock;
 
 void ErrorHandler::log_error(const std::string& atm_id, char action, const std::string& account_id, double amount) {
     std::string message;
     switch (action) {
-        case 'O': // Open Account
+        case 'O':
             message = "Error " + atm_id + ": Your transaction failed – account with the same id exists";
             break;
-        case 'D': // Deposit
+        case 'D':
             message = "Error " + atm_id + ": Your transaction failed – password for account id " + account_id + " is incorrect";
             break;
-        case 'W': // Withdraw
+        case 'W':
             if (amount > 0) {
-                message = "Error " + atm_id + ": Your transaction failed – account id " + account_id + " balance is lower than the amount";
+                message = "Error " + atm_id + ": Your transaction failed – account id " + account_id + " balance is lower than " + std::to_string(amount);
             } else {
                 message = "Error " + atm_id + ": Your transaction failed – password for account id " + account_id + " is incorrect";
             }
             break;
-        case 'B': // Balance Inquiry
+        case 'Q':
             message = "Error " + atm_id + ": Your transaction failed – password for account id " + account_id + " is incorrect";
             break;
-        case 'Q': // Close Account
-            message = "Error " + atm_id + ": Your transaction failed – password for account id " + account_id + " is incorrect";
-            break;
-        case 'T': // Transfer
+        case 'T':
             if (amount > 0) {
-                message = "Error " + atm_id + ": Your transaction failed – account id " + account_id + " balance is lower than the amount";
+                message = "Error " + atm_id + ": Your transaction failed – account id " + account_id + " balance is lower than " + std::to_string(amount);
             } else {
                 message = "Error " + atm_id + ": Your transaction failed – password for account id " + account_id + " is incorrect";
             }
             break;
-        case 'C': // ATM Shutdown
-            message = "Error " + atm_id + ": Your transaction failed – ATM ID does not exist";
+        case 'C':
+            if(amount == 0){
+                message = "Error " + atm_id + ": Your close operation failed - ATM ID " + account_id + " is already in a closed state";
+            }else{
+                message = "Error " + atm_id + ": Your transaction failed – ATM_ID " + account_id + " does not exist";
+            }
             break;
-        default:
-            message = "Unknown error for ATM " + atm_id;
+        
+         case 'R':
+            message = atm_id + ": Rollback to " + std::to_string(static_cast<int>(amount)) + " Failed";
+            break;
+
+        case 'I': //Invalid account id
+            message = "Error " + atm_id + ": Your transaction failed – account id " + account_id + " does not exist";
+            break;
     }
-    //pthread_mutex_lock(&log_lock);
+
     pthread_mutex_lock(&log_lock);
     log_file << message << std::endl;
     pthread_mutex_unlock(&log_lock);
-    //pthread_mutex_unlock(&log_lock);
 }
 
 void ErrorHandler::log_success(const std::string& atm_id, char action, const std::string& account_id, double balance, double amount, const std::string& target_account) {
     std::string message;
     switch (action) {
-        case 'O': // Open Account
-            message = atm_id + ": New account id is " + account_id + " with password " + account_id + " and initial balance " + std::to_string(balance);
-            break;
-        case 'D': // Deposit
+        case 'D':
             message = atm_id + ": Account " + account_id + " new balance is " + std::to_string(balance) + " after " + std::to_string(amount) + " $ was deposited";
             break;
-        case 'W': // Withdraw
+        case 'W':
             message = atm_id + ": Account " + account_id + " new balance is " + std::to_string(balance) + " after " + std::to_string(amount) + " $ was withdrawn";
             break;
-        case 'B': // Balance Inquiry
+        case 'B':
             message = atm_id + ": Account " + account_id + " balance is " + std::to_string(balance);
             break;
-        case 'Q': // Close Account
+        case 'Q':
             message = atm_id + ": Account " + account_id + " is now closed. Balance was " + std::to_string(balance);
             break;
-        case 'T': // Transfer
+        case 'T':
             message = atm_id + ": Transfer of " + std::to_string(amount) + " $ from account " + account_id + " to account " + target_account + " completed. New balance for source account: " + std::to_string(balance);
             break;
+        case 'R':
+            message = atm_id + ": Rollback to " + std::to_string(static_cast<int>(amount)) + " bank iterations ago was completed successfully";
+            break;
         default:
-            message = "Unknown success for ATM " + atm_id;
+            message = "Unknown success action for ATM " + atm_id;
     }
-    //pthread_mutex_lock(&log_lock);
+
     pthread_mutex_lock(&log_lock);
     log_file << message << std::endl;
     pthread_mutex_unlock(&log_lock);
-   // pthread_mutex_unlock(&log_lock);
 }
 
+void ErrorHandler::log_open_account_success(const std::string& atm_id, const std::string& account_id,const std::string& password, double initial_balance) {
+    std::string message;
+    message = atm_id + ": New account id is " + account_id + " with password " + password + " and initial balance " + std::to_string(initial_balance);
+    pthread_mutex_lock(&log_lock);
+    log_file << message << std::endl;
+    pthread_mutex_unlock(&log_lock);
+}
 
+void ErrorHandler::log_atm_error(const std::string& source_atm_id, const std::string& target_atm_id, bool atm_already_closed) {
+    std::string message;
+    if(atm_already_closed){
+        message = "Error " + source_atm_id + ": Your close operation failed - ATM ID " + target_atm_id + " is already in a closed state";
+    }else{
+        message = "Error " + source_atm_id + ": Your transaction failed – ATM_ID " + target_atm_id + " does not exist";
+    }
 
- ErrorHandler::~ErrorHandler(){
+    pthread_mutex_lock(&log_lock);
+    log_file << message << std::endl;
+    pthread_mutex_unlock(&log_lock);
+}
+void ErrorHandler::log_atm_success(const std::string& source_atm_id, const std::string& target_atm_id) {
+    std::string message = "Bank: " +source_atm_id + " closed " + target_atm_id + " successfully";
+    pthread_mutex_lock(&log_lock);
+    log_file << message << std::endl;
+    pthread_mutex_unlock(&log_lock);
+}
 
- //   pthread_mutex_destroy(&log_lock);
- }
+ErrorHandler::~ErrorHandler() {
+    pthread_mutex_destroy(&log_lock);
+}
+
+void ErrorHandler::handle_system_error(const std::string& system_call_name) {
+    perror(("Bank error: " + system_call_name + " failed").c_str());
+    exit(EXIT_FAIL);
+}

@@ -3,7 +3,7 @@
 #include <pthread.h>
 // Initialize static members
 std::ofstream Logger::log_file;
-pthread_mutex_t log_lock;
+extern pthread_mutex_t log_lock;
 // Provide access to the single instance of Logger
 Logger& Logger::get_instance() {
     static Logger instance; // This is the single instance
