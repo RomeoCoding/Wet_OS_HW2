@@ -3,7 +3,7 @@
 #include <fstream>
 #include <sstream>
 #include <string>
-
+#define EXIT_FAIL 1
 std::ofstream log_file("log.txt", std::ios_base::app);
 extern pthread_mutex_t log_lock;
 
@@ -58,9 +58,6 @@ void ErrorHandler::log_error(const std::string& atm_id, char action, const std::
 void ErrorHandler::log_success(const std::string& atm_id, char action, const std::string& account_id, double balance, double amount, const std::string& target_account) {
     std::string message;
     switch (action) {
-        case 'O':
-            message = atm_id + ": New account id is " + account_id + " with password " + account_id + " and initial balance " + std::to_string(balance);
-            break;
         case 'D':
             message = atm_id + ": Account " + account_id + " new balance is " + std::to_string(balance) + " after " + std::to_string(amount) + " $ was deposited";
             break;
@@ -88,12 +85,20 @@ void ErrorHandler::log_success(const std::string& atm_id, char action, const std
     pthread_mutex_unlock(&log_lock);
 }
 
+void ErrorHandler::log_open_account_success(const std::string& atm_id, const std::string& account_id,const std::string& password, double initial_balance) {
+    std::string message;
+    message = atm_id + ": New account id is " + account_id + " with password " + password + " and initial balance " + std::to_string(initial_balance);
+    pthread_mutex_lock(&log_lock);
+    log_file << message << std::endl;
+    pthread_mutex_unlock(&log_lock);
+}
+
 void ErrorHandler::log_atm_error(const std::string& source_atm_id, const std::string& target_atm_id, bool atm_already_closed) {
     std::string message;
     if(atm_already_closed){
-        message = "Error " + source_atm_id + ": Your close operation failed - ATM ID " + target_atm_id + " is already in a closed state";
+        message = "Error " + source_atm_id + ": Your close operation failed - ATM ID " + target_atm_id[3] + " is already in a closed state";
     }else{
-        message = "Error " + source_atm_id + ": Your transaction failed – ATM_ID " + target_atm_id + " does not exist";
+        message = "Error " + source_atm_id + ": Your transaction failed – ATM_ID " + target_atm_id[3] + " does not exist";
     }
 
     pthread_mutex_lock(&log_lock);
@@ -109,4 +114,9 @@ void ErrorHandler::log_atm_success(const std::string& source_atm_id, const std::
 
 ErrorHandler::~ErrorHandler() {
     pthread_mutex_destroy(&log_lock);
+}
+
+void ErrorHandler::handle_system_error(const std::string& system_call_name) {
+    perror(("Bank error: " + system_call_name + " failed").c_str());
+    exit(EXIT_FAIL);
 }

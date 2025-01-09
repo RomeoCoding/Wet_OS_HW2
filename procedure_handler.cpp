@@ -23,8 +23,6 @@ bool process_command(const std::string& command, Bank& bank, const std::string& 
     stream >> action;
 
     if (stream.fail()) {
-        pthread_mutex_lock(&cerr_lock);
-        std::cerr << "Invalid command format: " << command << std::endl; //can assume command is valid
         return false;
     }
 
@@ -38,9 +36,6 @@ bool process_command(const std::string& command, Bank& bank, const std::string& 
         case 'R': success = handle_rollback(stream, bank, atm_id, Persistance); break;  
         case 'C': success = handle_close_atm(stream, bank, atm_id, Persistance); break;
         default:
-            pthread_mutex_lock(&cerr_lock);
-            std::cerr << "Unknown action: " << action << " in command: " << command << std::endl; //remove after fixing log_command
-            pthread_mutex_unlock(&cerr_lock);
             success = false;
     }
     return success;
@@ -48,7 +43,6 @@ bool process_command(const std::string& command, Bank& bank, const std::string& 
 
 void execute_command_with_retries(Bank* bank, const std::string& command,const std::string& atm_id, bool is_persistent) {
     bool first_attempt = true;
-    std::cout << " command is" << command << std::endl; //debug should be removed
     do {
         bool success = process_command(command, *bank, atm_id, is_persistent);
         if (success) {
@@ -60,16 +54,11 @@ void execute_command_with_retries(Bank* bank, const std::string& command,const s
                 first_attempt = false; 
                 is_persistent = false;
             } else {
-                 printf("error1") ;//remove after fixing log_command
-          //      log_command_failure(command, atm_id);
                 break; 
             }
-            std::cout << "presisitence failed\n"; //debug should be removed later
             sleep(1); //sleep for 1 sec/
             usleep(100000); 
         } else {
-              
-       //     log_command_failure(command, atm_id);
             break;
         }
     } while (true);
@@ -107,20 +96,11 @@ bool handle_rollback(std::istringstream& stream, Bank& bank, const std::string& 
     stream >> iterations;
 
     if (stream.fail() && !Persistance) {
-        
-        std::cerr << "Invalid parameters for rollback" << std::endl;//remove after fixing log_command
         return false;
     }
 
     bank.rollback_add(iterations , atm_id);
-    // Call restore_snapshot to perform the rollback using the correct parameters
     return true;  // No need to pass accounts or main_account
-
-    /*// Log the rollback action
-    if (log_file.is_open()) {
-        log_file << atm_id << ": Rollback to " << iterations << " bank iterations ago was completed successfully\n";
-    }
-    */
 }
 
 // Helper function implementations
@@ -130,7 +110,6 @@ bool handle_open_account(std::istringstream& stream, Bank& bank, const std::stri
     stream >> account_id >> password >> initial_balance;
 
     if (stream.fail() && !Persistance) {
-        std::cerr << "Invalid parameters for account creation" << std::endl;
         return false;
     }
 
@@ -143,7 +122,6 @@ bool handle_deposit(std::istringstream& stream, Bank& bank, const std::string& a
     stream >> account_id >> password >> amount;
 
     if (stream.fail() && !Persistance) {
-        std::cerr << "Invalid parameters for deposit" << std::endl;
         return false;
     }
 
@@ -156,7 +134,6 @@ bool handle_withdraw(std::istringstream& stream, Bank& bank, const std::string& 
     stream >> account_id >> password >> amount;
 
     if (stream.fail() && !Persistance) {
-        std::cerr << "Invalid parameters for withdrawal" << std::endl;
         return false;
     }
 
@@ -168,7 +145,6 @@ bool handle_balance_inquiry(std::istringstream& stream, Bank& bank, const std::s
     stream >> account_id >> password;
 
     if (stream.fail() && !Persistance) {
-        std::cerr << "Invalid parameters for balance inquiry" << std::endl;
         return false;
     }
 
@@ -181,7 +157,6 @@ bool handle_transfer(std::istringstream& stream, Bank& bank, const std::string& 
     stream >> source_account_id >> password >> target_account_id >> amount;
 
     if (stream.fail() && !Persistance) {
-        std::cerr << "Invalid parameters for transfer" << std::endl;
         return false;
     }
 
@@ -193,7 +168,6 @@ bool handle_close_account(std::istringstream& stream, Bank& bank, const std::str
     stream >> account_id >> password;
 
     if (stream.fail() && !Persistance) {
-        std::cerr << "Invalid parameters for account closure" << std::endl;
         return false;
     }
 
@@ -203,11 +177,10 @@ bool handle_close_account(std::istringstream& stream, Bank& bank, const std::str
 bool handle_close_atm(std::istringstream& stream, Bank& bank, const std::string& atm_id, bool Persistance) {
     std::string target_atm_id;
     if (stream.fail() && !Persistance) {
-        std::cerr << "Invalid parameters for atm closure" << std::endl;
         return false;
     }
     stream >> target_atm_id;
-
+    target_atm_id = "ATM " + target_atm_id;
     return(bank.close_atm(atm_id, target_atm_id,Persistance));
 }
 

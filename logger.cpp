@@ -12,9 +12,10 @@ Logger& Logger::get_instance() {
 
 // Open the log file
 void Logger::open_log() {
-    log_file.open("log.txt", std::ios_base::app); // Open in append mode
+    log_file.open("log.txt", std::ios_base::app); 
     if (!log_file.is_open()) {
-        std::cerr << "Error: Unable to open log file!" << std::endl;
+        perror("System error: open file failed");
+        exit(1);
     }
 }
 
