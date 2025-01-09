@@ -24,6 +24,7 @@ std::string Account::get_password() const {
 }
 
 double Account::view_balance() {
+   // pthread_rwlock_rdlock(&balance_rwlock);  // Acquire read lock
   
     Lock_Account_For_Reading_Access();
    
@@ -31,6 +32,7 @@ double Account::view_balance() {
     current_balance =current_balance +1 -1;
     unLock_Account_For_Reading_Access();
     
+    //  pthread_rwlock_unlock(&balance_rwlock);  // Release lock
     return current_balance;
 }
 
@@ -39,10 +41,12 @@ bool Account::authenticate(const std::string& input_password) const {
 }
 
 void Account::deposit(double amount) {
+  //  pthread_rwlock_wrlock(&balance_rwlock);  // Acquire write lock
     pthread_mutex_lock(&write_mutex);  //lock for writing 
     balance += amount;
     pthread_mutex_unlock(&write_mutex); //unlock fow writing
-
+    //note there is no need to lock reading becuase the next reader will stop at writing lock
+  //  pthread_rwlock_unlock(&balance_rwlock);  // Release lock
 }
 
 double Account::withdraw(double amount, int is_per) {
@@ -71,9 +75,11 @@ double Account::withdraw(double amount, int is_per) {
 void Account::print_account_details() {
    
     Lock_Account_For_Reading_Access();
+   // pthread_rwlock_rdlock(&balance_rwlock);  // Acquire read lock
     std::cout << "Account " << id << ": Balance - " << balance 
               << " $, Account Password - " << password << std::endl;
 
+    //pthread_rwlock_unlock(&balance_rwlock);  // Release lock
     unLock_Account_For_Reading_Access();
 }
 

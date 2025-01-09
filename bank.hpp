@@ -71,7 +71,7 @@ public:
     //Threads for periodic functions
     void start_account_print_thread();
     void start_withdrawal_thread();
-    void start_snapshot_thread();
+    //void start_snapshot_thread();
 
     //Methods for ATMs
     void initialize_atms(const std::vector<std::string>& file_paths);
@@ -111,7 +111,7 @@ public:
     //thread functions
     static void* print_accounts_periodically(void* arg);  
     static void* withdraw_from_accounts(void* arg);
-    static void* snapshot_thread(void* arg);    
+    //static void* snapshot_thread(void* arg);    
 
     bool find_atm(const std::string& atm_id);
     bool close_target_atm(const std::string& atm_id);

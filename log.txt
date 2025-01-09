@@ -1,10 +1,28 @@
-ATM2: New account id is 1232 with password 1222 and initial balance 1333.000000
-Error ATM2: Your transaction failed – account with the same id exists
-Error ATM2: Your transaction failed – account with the same id exists
-Error ATM2: Your transaction failed – account with the same id exists
-Error ATM2: Your transaction failed – account with the same id exists
-Error ATM2: Your transaction failed – account with the same id exists
-Error ATM2: Your transaction failed – account with the same id exists
-Error ATM2: Your transaction failed – account with the same id exists
-Bank: commissions of 4% were charged, bank gained 53.32 from account 1232
-Bank: commissions of 2% were charged, bank gained 25.5936 from account 1232
+snapshot taken atThu Jan  9 22:33:41 2025
+snapshot taken atThu Jan  9 22:33:41 2025
+snapshot taken atThu Jan  9 22:33:42 2025
+snapshot taken atThu Jan  9 22:33:42 2025
+snapshot taken atThu Jan  9 22:33:43 2025
+snapshot taken atThu Jan  9 22:33:43 2025
+ATM3: New account id is 1342 with password 1342 and initial balance 1322.000000
+ATM2: New account id is 1122 with password 1122 and initial balance 1332.000000
+ATM1: New account id is 1273 with password 1273 and initial balance 3223.000000
+Error ATM1: Your transaction failed – account id 1255 does not exist
+Error ATM1: Your transaction failed – account id 1233 does not exist
+Error ATM1: Your transaction failed – account id 1233 does not exist
+ATM2: New account id is 1142 with password 1142 and initial balance 1322.000000
+ATM2: New account id is 1132 with password 1132 and initial balance 3322.000000
+ATM3: New account id is 21132 with password 21132 and initial balance 3322.000000
+ATM1: Account 1232 balance is 3223.000000
+ATM1: New account id is 1232 with password 1232 and initial balance 3223.000000
+ATM1: New account id is 1234 with password 1234 and initial balance 3223.000000
+ATM1: New account id is 1235 with password 1235 and initial balance 3223.000000
+ATM2: New account id is 1233 with password 1233 and initial balance 3232.000000
+ATM3: New account id is 2233 with password 2233 and initial balance 3232.000000
+snapshot taken atThu Jan  9 22:33:44 2025
+snapshot taken atThu Jan  9 22:33:44 2025
+ATM3: New account id is 1422 with password 1422 and initial balance 1332.000000
+ATM1: Account 1233 balance is 3232.000000
+snapshot taken atThu Jan  9 22:33:45 2025
+snapshot taken atThu Jan  9 22:33:45 2025
+snapshot taken atThu Jan  9 22:33:46 2025

@@ -14,6 +14,7 @@ class Thread_Data{
 
     public:
     Thread_Data(ATM* atm,Bank* bank);
+
     ATM* get_atm();
     Bank* get_Bank();
 };

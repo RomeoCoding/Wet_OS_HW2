@@ -34,6 +34,5 @@ int main(int argc, char* argv[]) {
 
     bank.initialize_atms(input_files);
     bank.start_atm_threads(vip_threads_number);
-
     return SUCCESS_END;
 }

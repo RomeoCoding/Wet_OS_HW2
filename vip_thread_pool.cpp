@@ -43,7 +43,9 @@ Vip_Function Vip_Thread_Pool::get_Next_Vip_Command(){
 
 
  void Vip_Thread_Pool::Set_End_Vip_Threads(){
-
+    
+    pthread_mutex_lock(&vip_command_list_lock);
     End_Vip_Threads = 1;
+    pthread_mutex_unlock(&vip_command_list_lock);
     pthread_cond_broadcast(&vip_empty_or_end);
  }
